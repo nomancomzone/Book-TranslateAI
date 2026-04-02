@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--blue:#1877F2;--blue-d:#0D5FD6;--blue-l:#EBF2FF;--blue-ll:#F5F8FF;
+--teal:#0EA5E9;--purple:#7C3AED;
+--text:#0F172A;--text2:#475569;--text3:#94A3B8;
+--border:#E2E8F0;--border2:#CBD5E1;
+--bg:#F8FAFC;--white:#FFFFFF;
+--green:#16A34A;--red:#DC2626;--amber:#D97706;
+--radius:10px;--radius-lg:16px;
+--shadow:0 1px 3px rgba(0,0,0,.08),0 1px 2px rgba(0,0,0,.06);
+--shadow-md:0 4px 16px rgba(0,0,0,.08);
+--shadow-lg:0 10px 40px rgba(0,0,0,.1);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6;overflow-x:hidden}
+.bn{font-family:'Noto Serif Bengali',serif}
+
+/* ══ FLOATING CONTACT BUTTONS ══ */
+.float-root{position:fixed;bottom:28px;right:28px;display:flex;flex-direction:column;align-items:flex-end;gap:14px;z-index:9999}
+
+.fbtn-row{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+.ftip{background:#1C1E21;color:#fff;font-size:12px;font-weight:600;padding:6px 12px;border-radius:8px;white-space:nowrap;opacity:0;transition:opacity .18s;pointer-events:none;position:relative;font-family:'Inter',sans-serif}
+.ftip::after{content:'';position:absolute;left:100%;top:50%;transform:translateY(-50%);border:6px solid transparent;border-left-color:#1C1E21}
+.fbtn-row:hover .ftip{opacity:1}
+
+.fbtn{width:58px;height:58px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .35s cubic-bezier(.34,1.56,.64,1),opacity .3s,box-shadow .2s;text-decoration:none;flex-shrink:0}
+.fbtn:hover{transform:scale(1.13) !important}
+.fbtn:active{transform:scale(.94) !important}
+.fbtn svg{width:28px;height:28px;fill:white;pointer-events:none}
+.fbtn.fhide{opacity:0;transform:translateY(20px) scale(.65);pointer-events:none}
+
+.fwa{background:linear-gradient(145deg,#2ECC71,#25D366,#128C7E);box-shadow:0 6px 22px rgba(37,211,102,.5)}
+.fwa:hover{box-shadow:0 10px 32px rgba(37,211,102,.65) !important}
+.fms{background:linear-gradient(145deg,#18ACFE,#0078FF,#9B59B6);box-shadow:0 6px 22px rgba(0,120,255,.45)}
+.fms:hover{box-shadow:0 10px 32px rgba(0,120,255,.6) !important}
+
+.ftoggle-row{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+.ftoggle-row .ftip::after{border-left-color:#1C1E21}
+.ftoggle-row:hover .ftip{opacity:1}
+
+.ftoggle{width:62px;height:62px;border-radius:50%;background:linear-gradient(145deg,#8B5CF6,#7C3AED,#6D28D9);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(109,40,217,.5);transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .2s;flex-shrink:0}
+.ftoggle:hover{box-shadow:0 10px 32px rgba(109,40,217,.65)}
+.ftoggle svg{width:28px;height:28px;fill:white;transition:transform .4s ease}
+.ftoggle.fopen svg{transform:rotate(135deg)}
+@keyframes fpulse{0%{box-shadow:0 6px 24px rgba(109,40,217,.5),0 0 0 0 rgba(109,40,217,.4)}70%{box-shadow:0 6px 24px rgba(109,40,217,.5),0 0 0 14px rgba(109,40,217,0)}100%{box-shadow:0 6px 24px rgba(109,40,217,.5),0 0 0 0 rgba(109,40,217,0)}}
+.ftoggle.fpulse{animation:fpulse 2.2s infinite}
+
+/* ══ ANNOUNCEMENT BAR ══ */
+.ann-bar{background:var(--blue);color:white;text-align:center;padding:7px 16px;font-size:12px;font-weight:500;display:flex;align-items:center;justify-content:center;gap:8px}
+.ann-dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.6)}
+
+/* ══ TOPBAR ══ */
+.topbar{background:var(--white);border-bottom:1px solid var(--border);padding:8px 0;font-size:12px;color:var(--text3)}
+.topbar-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;justify-content:space-between;align-items:center}
+.topbar-link{color:var(--text3);cursor:pointer;transition:.15s;font-size:12px}
+.topbar-link:hover{color:var(--blue)}
+
+/* ══ HEADER ══ */
+header{background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:200;box-shadow:var(--shadow)}
+.header-inner{max-width:1200px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:16px}
+.logo{display:flex;align-items:center;gap:10px;cursor:pointer;flex-shrink:0}
+.logo-icon{width:36px;height:36px;background:var(--blue);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.logo-text{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.5px}
+.logo-text span{color:var(--blue)}
+.search-bar{flex:1;max-width:520px;position:relative}
+.search-bar input{width:100%;padding:9px 14px 9px 40px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:var(--bg);outline:none;transition:.2s}
+.search-bar input:focus{border-color:var(--blue);background:var(--white);box-shadow:0 0 0 3px rgba(24,119,242,.1)}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px}
+.header-right{display:flex;align-items:center;gap:8px;margin-left:auto;flex-shrink:0}
+.icon-btn{position:relative;width:38px;height:38px;border-radius:8px;border:1.5px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:.15s;color:var(--text2)}
+.icon-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-l)}
+.icon-badge{position:absolute;top:-5px;right:-5px;background:var(--red);color:white;border-radius:50%;width:16px;height:16px;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--white)}
+.hbtn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--text2);font-family:inherit;transition:.15s;display:flex;align-items:center;gap:5px}
+.hbtn:hover{border-color:var(--blue);color:var(--blue)}
+.hbtn.primary{background:var(--blue);color:white;border-color:var(--blue)}
+.hbtn.primary:hover{background:var(--blue-d)}
+
+/* ══ SUBNAV ══ */
+.subnav{background:var(--white);border-bottom:1px solid var(--border)}
+.subnav-inner{max-width:1200px;margin:0 auto;padding:0 24px;display:flex;align-items:center;overflow-x:auto}
+.subnav-inner::-webkit-scrollbar{display:none}
+.nav-item{padding:11px 14px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:.15s;display:flex;align-items:center;gap:4px;position:relative}
+.nav-item:hover{color:var(--blue)}
+.nav-item.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:600}
+.arrow{font-size:9px;color:var(--text3)}
+.dropdown{position:relative}
+.dropdown-menu{display:none;position:absolute;top:calc(100% + 4px);left:0;background:var(--white);border:1px solid var(--border);border-radius:var(--radius);min-width:200px;box-shadow:var(--shadow-lg);z-index:300;padding:6px}
+.dropdown:hover .dropdown-menu{display:block}
+.dd-item{padding:8px 12px;font-size:13px;color:var(--text2);cursor:pointer;border-radius:6px;transition:.1s}
+.dd-item:hover{background:var(--blue-l);color:var(--blue)}
+.dd-sep{height:1px;background:var(--border);margin:4px 0}
+.nav-badge{background:var(--blue);color:white;font-size:9px;font-weight:700;padding:1px 5px;border-radius:4px;margin-left:2px}
+
+/* ══ EBOOK TAB ══ */
+.ebook-tab{position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:100;writing-mode:vertical-rl;background:var(--blue);color:white;padding:14px 8px;font-size:11px;font-weight:700;cursor:pointer;border-radius:0 8px 8px 0;letter-spacing:1px;box-shadow:var(--shadow-md);transition:.2s}
+.ebook-tab:hover{background:var(--blue-d)}
+
+/* ══ PAGES ══ */
+.page{display:none}.page.active{display:block}
+.main{max-width:1200px;margin:0 auto;padding:20px 24px}
+
+/* ══ CAROUSEL ══ */
+.hero-section{display:grid;grid-template-columns:1fr 320px;gap:16px;margin-bottom:20px}
+.carousel-main{border-radius:var(--radius-lg);overflow:hidden;position:relative}
+.carousel-slides{display:flex;transition:.45s}
+.slide{min-width:100%;min-height:250px;display:flex;align-items:center;padding:36px 44px;position:relative;overflow:hidden}
+.slide-1{background:linear-gradient(135deg,#1877F2,#0EA5E9)}
+.slide-2{background:linear-gradient(135deg,#7C3AED,#1877F2)}
+.slide-3{background:linear-gradient(135deg,#0F172A,#1877F2)}
+.slide-content{color:white;z-index:2;max-width:58%}
+.slide-tag{background:rgba(255,255,255,.2);backdrop-filter:blur(8px);display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;margin-bottom:10px;border:1px solid rgba(255,255,255,.3)}
+.slide-title{font-size:22px;font-weight:800;line-height:1.2;margin-bottom:8px;letter-spacing:-.3px}
+.slide-sub{font-size:13px;opacity:.85;margin-bottom:18px;line-height:1.5}
+.slide-btn{background:white;color:var(--blue);border:none;padding:9px 20px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+.slide-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.slide-deco{position:absolute;right:-10px;top:50%;transform:translateY(-50%);font-size:110px;opacity:.12}
+.car-prev,.car-next{position:absolute;top:50%;transform:translateY(-50%);background:rgba(255,255,255,.2);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.3);color:white;width:32px;height:32px;border-radius:8px;font-size:14px;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;transition:.15s}
+.car-prev{left:10px}.car-next{right:10px}
+.car-dots{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);display:flex;gap:5px}
+.dot{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.45);cursor:pointer;transition:.2s}
+.dot.active{background:white;width:18px;border-radius:3px}
+
+/* ══ HERO SIDE ══ */
+.hero-side{display:flex;flex-direction:column;gap:12px}
+.hero-side-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.2s}
+.hero-side-card:hover{border-color:var(--blue);box-shadow:var(--shadow-md);transform:translateX(2px)}
+.hsc-icon{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.hsc-info h4{font-size:12px;font-weight:700;margin-bottom:2px}
+.hsc-info p{font-size:11px;color:var(--text3);line-height:1.4}
+.quick-card{background:var(--blue);border-radius:var(--radius);padding:16px;color:white}
+.quick-card h4{font-size:13px;font-weight:700;margin-bottom:4px}
+.quick-card p{font-size:11px;opacity:.8;margin-bottom:12px}
+.quick-btn{background:white;color:var(--blue);border:none;padding:8px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;width:100%;font-family:inherit}
+.quick-btn:hover{background:#f0f4ff}
+
+/* ══ FILTER ROW ══ */
+.filter-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.filter-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:.2s}
+.filter-card:hover{border-color:var(--blue);box-shadow:var(--shadow-md)}
+.fi-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.fi-label{font-size:12px;font-weight:700;margin-bottom:1px}
+.fi-sub{font-size:11px;color:var(--blue);font-weight:600}
+
+/* ══ STATS ══ */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+.stat-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px;text-align:center}
+.stat-num{font-size:22px;font-weight:800;color:var(--blue);letter-spacing:-.5px}
+.stat-label{font-size:11px;color:var(--text3);margin-top:2px}
+
+/* ══ SECTION ══ */
+.section-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-title-wrap{display:flex;align-items:center;gap:8px}
+.sec-pill{width:4px;height:18px;background:var(--blue);border-radius:2px}
+.sec-title{font-size:16px;font-weight:800;color:var(--text);letter-spacing:-.2px}
+.see-all-btn{font-size:12px;color:var(--blue);font-weight:600;cursor:pointer;padding:5px 12px;border:1px solid var(--blue);border-radius:6px;transition:.15s}
+.see-all-btn:hover{background:var(--blue);color:white}
+
+/* ══ CAT GRID ══ */
+.cat-section{margin-bottom:18px}
+.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.cat-block{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:.2s}
+.cat-block:hover{box-shadow:var(--shadow-md)}
+.cat-header{padding:9px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border)}
+.cat-header-l{display:flex;align-items:center;gap:7px}
+.cat-ico{width:24px;height:24px;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px}
+.cat-title{font-size:12px;font-weight:700}
+.cat-see{font-size:11px;color:var(--blue);cursor:pointer}
+.cat-book-grid{display:grid;grid-template-columns:1fr 1fr}
+.cat-book{padding:9px;border-bottom:1px solid var(--border);border-right:1px solid var(--border);cursor:pointer;transition:.1s;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.cat-book:nth-child(even){border-right:none}
+.cat-book:nth-last-child(-n+2){border-bottom:none}
+.cat-book:hover{background:var(--blue-ll)}
+.cat-cover{width:44px;height:58px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid var(--border)}
+.cat-name{font-size:10px;color:var(--text2);line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ══ LAYOUT ══ */
+.layout{display:flex;gap:16px}
+.sidebar{width:198px;flex-shrink:0}
+.content-area{flex:1;min-width:0}
+.sidebar-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden}
+.sidebar-hd{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;display:flex;align-items:center;gap:6px}
+.sid-list{padding:4px 0}
+.sid-item{padding:7px 14px;font-size:12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #f8fafc;color:var(--text2);transition:.1s}
+.sid-item:hover{background:var(--blue-l);color:var(--blue)}
+.sid-item.active{background:var(--blue-l);color:var(--blue);font-weight:600}
+.sid-count{font-size:10px;color:var(--text3);background:var(--bg);padding:1px 6px;border-radius:10px}
+
+/* ══ BOOK CARDS ══ */
+.books-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+.book-card{background:var(--white);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:.2s;position:relative}
+.book-card:hover{box-shadow:var(--shadow-lg);border-color:#BFDBFE;transform:translateY(-3px)}
+.book-cover{aspect-ratio:2/3;display:flex;align-items:center;justify-content:center;position:relative;border-bottom:1px solid var(--border)}
+.book-cover-inner{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:38px}
+.book-tag{position:absolute;top:6px;left:6px;font-size:9px;font-weight:700;padding:2px 7px;border-radius:4px;z-index:2}
+.tag-classic{background:var(--blue-l);color:var(--blue);border:1px solid #BFDBFE}
+.tag-islamic{background:#FEF3C7;color:var(--amber);border:1px solid #FDE68A}
+.book-info{padding:9px}
+.book-title{font-size:12px;font-weight:700;color:var(--text);line-height:1.4;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:32px}
+.book-author{font-size:11px;color:var(--text3);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.book-stars{display:flex;align-items:center;gap:3px;margin-bottom:4px}
+.stars{color:#F59E0B;font-size:10px}
+.star-count{font-size:10px;color:var(--text3)}
+.book-price{font-size:12px;font-weight:700;color:var(--green)}
+.book-actions{padding:0 9px 9px;display:flex;gap:5px}
+.btn-read{flex:1;background:var(--blue);color:white;border:none;padding:6px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;font-weight:600;transition:.15s}
+.btn-read:hover{background:var(--blue-d)}
+.btn-wish{width:28px;background:var(--white);border:1.5px solid var(--border);border-radius:6px;cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;color:var(--text3);transition:.15s}
+.btn-wish:hover{border-color:var(--red);color:var(--red)}
+.report-btn{position:absolute;top:6px;right:6px;background:rgba(255,255,255,.9);border:1px solid var(--border);color:var(--text3);border-radius:4px;padding:2px 5px;font-size:9px;cursor:pointer;opacity:0;transition:.2s}
+.book-card:hover .report-btn{opacity:1}
+
+/* ══ SECTION BLOCK ══ */
+.section-block{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:14px}
+
+/* ══ BUTTONS ══ */
+.btn{padding:9px 20px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;font-family:inherit;transition:.15s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--blue);color:white}.btn-primary:hover{background:var(--blue-d)}
+.btn-outline{background:var(--white);color:var(--blue);border:1.5px solid var(--blue)}.btn-outline:hover{background:var(--blue-l)}
+.btn-ghost{background:var(--bg);color:var(--text2);border:1.5px solid var(--border)}.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.btn-block{width:100%;justify-content:center}
+.btn-lg{padding:11px 24px;font-size:14px;border-radius:10px}
+.btn-sm{padding:6px 12px;font-size:12px}
+
+/* ══ FORMS ══ */
+.form-group{margin-bottom:14px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.form-control{width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;color:var(--text);background:var(--white);outline:none;transition:.2s}
+.form-control:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,119,242,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* ══ UPLOAD ══ */
+.upload-zone{border:2px dashed var(--border2);border-radius:var(--radius);padding:30px;text-align:center;background:var(--blue-ll);cursor:pointer;transition:.2s}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:var(--blue-l)}
+
+/* ══ MODE SELECTOR ══ */
+.mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.mode-card{border:2px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:.2s;background:var(--white);position:relative}
+.mode-card:hover{border-color:var(--blue);background:var(--blue-ll)}
+.mode-card.selected{border-color:var(--blue);background:var(--blue-ll);box-shadow:0 0 0 3px rgba(24,119,242,.1)}
+.mode-check{position:absolute;top:10px;right:10px;width:18px;height:18px;border-radius:50%;border:2px solid var(--border2);background:var(--white);display:flex;align-items:center;justify-content:center;font-size:9px;color:white;transition:.2s}
+.mode-card.selected .mode-check{background:var(--blue);border-color:var(--blue)}
+.mode-card.selected .mode-check::after{content:'✓'}
+.mode-icon{font-size:26px;margin-bottom:8px}
+.mode-name{font-size:13px;font-weight:700;margin-bottom:4px}
+.mode-desc{font-size:11px;color:var(--text3);line-height:1.5}
+.mode-tag{display:inline-block;margin-top:6px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px}
+.tag-ai{background:#EDE9FE;color:var(--purple)}
+.tag-pro{background:#FEF3C7;color:var(--amber)}
+
+/* ══ AI RESULT ══ */
+.ai-result{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-top:14px}
+.ai-result-hd{background:linear-gradient(135deg,var(--blue),var(--teal));color:white;padding:13px 16px;display:flex;align-items:center;justify-content:space-between}
+.ai-result-hd h3{font-size:14px;font-weight:700}
+.ai-result-hd span{font-size:11px;opacity:.8}
+.ai-result-body{padding:16px}
+.res-section{margin-bottom:16px}
+.res-label{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px;padding-bottom:5px;border-bottom:2px solid}
+.res-label.sum{color:var(--blue);border-color:#BFDBFE}
+.res-label.kp{color:var(--green);border-color:#BBF7D0}
+.res-label.meta{color:var(--text3);border-color:var(--border)}
+.res-text{font-size:14px;line-height:1.8;color:var(--text2)}
+.kp-item{display:flex;gap:9px;font-size:13px;color:var(--text2);margin-bottom:8px;line-height:1.6;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:9px 12px}
+.kp-num{color:var(--blue);font-weight:700;flex-shrink:0;font-size:12px}
+.meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.meta-box{background:var(--bg);border-radius:8px;padding:10px 12px;font-size:12px}
+.meta-box-label{color:var(--text3);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.meta-box-val{font-weight:700;color:var(--text)}
+.dl-bar{background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.dl-info{font-size:12px;color:var(--text3)}
+
+/* ══ AI LOADING ══ */
+.ai-loading{text-align:center;padding:32px 20px}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ai-prog{background:var(--border);border-radius:10px;height:5px;margin:10px 40px;overflow:hidden}
+.ai-prog-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--teal));border-radius:10px;transition:.6s}
+
+/* ══ READER ══ */
+.reader-layout{display:flex;gap:16px}
+.reader-sidebar{width:220px;flex-shrink:0}
+.reader-main-area{flex:1;min-width:0}
+.reader-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:12px}
+.sum-block{background:var(--blue-ll);border:1px solid #BFDBFE;border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.sum-lbl{font-size:10px;font-weight:700;color:var(--blue);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px}
+.sum-txt{font-size:14px;line-height:1.9;color:var(--text2)}
+.kp-block{background:#F0FDF4;border:1px solid #BBF7D0;border-radius:8px;padding:12px 14px;margin-bottom:12px}
+.kp-lbl{font-size:10px;font-weight:700;color:var(--green);letter-spacing:.5px;text-transform:uppercase;margin-bottom:7px}
+.kp-row{display:flex;gap:7px;font-size:13px;color:var(--text2);margin-bottom:6px;line-height:1.6}
+.kp-row::before{content:'▸';color:var(--green);flex-shrink:0}
+.body-text{font-family:'Noto Serif Bengali',serif;font-size:15px;line-height:2.1;color:var(--text)}
+.body-text p{margin-bottom:14px}
+.hl{background:#FEF9C3;padding:0 2px;border-radius:2px}
+.wd{border-bottom:1.5px dotted var(--blue);color:var(--blue);cursor:help;position:relative}
+.wd .tip-wd{display:none;position:absolute;bottom:calc(100% + 5px);left:50%;transform:translateX(-50%);background:var(--text);color:white;border-radius:6px;padding:5px 10px;font-size:11px;white-space:nowrap;z-index:10;font-family:'Inter',sans-serif}
+.wd:hover .tip-wd{display:block}
+.toc-item{padding:7px 12px;font-size:12px;cursor:pointer;border-bottom:1px solid var(--bg);display:flex;gap:7px;align-items:center;transition:.1s;color:var(--text2)}
+.toc-item:hover{background:var(--blue-l);color:var(--blue)}
+.toc-item.active{background:var(--blue-l);color:var(--blue);font-weight:600}
+.toc-num{color:var(--text3);flex-shrink:0;font-size:10px}
+
+/* ══ AUTH ══ */
+.auth-wrap{max-width:400px;margin:40px auto;padding:0 24px}
+.auth-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;box-shadow:var(--shadow-lg)}
+.auth-top{padding:26px 26px 22px;text-align:center;border-bottom:1px solid var(--border)}
+.auth-logo{width:50px;height:50px;background:var(--blue);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin:0 auto 12px}
+.auth-top h2{font-size:20px;font-weight:800;margin-bottom:4px;letter-spacing:-.3px}
+.auth-top p{font-size:12px;color:var(--text3)}
+.auth-body{padding:22px 26px}
+.auth-footer{text-align:center;font-size:12px;color:var(--text3);margin-top:12px}
+.auth-footer a{color:var(--blue);font-weight:600;cursor:pointer}
+
+/* ══ HISTORY ══ */
+.hist-row{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:.2s}
+.hist-row:hover{border-color:var(--blue);box-shadow:var(--shadow-md)}
+.hist-ico{width:40px;height:54px;border-radius:6px;background:var(--blue-ll);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;border:1px solid #BFDBFE}
+.hist-info{flex:1;min-width:0}
+.hist-title{font-size:13px;font-weight:700;margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hist-meta{font-size:11px;color:var(--text3)}
+.hist-badge{display:inline-block;font-size:9px;font-weight:700;padding:1px 6px;border-radius:3px;margin-left:4px}
+.hb-sum{background:var(--blue-l);color:var(--blue)}
+.hb-full{background:#DCFCE7;color:var(--green)}
+
+/* ══ PROFILE ══ */
+.profile-banner{background:linear-gradient(135deg,var(--blue),var(--teal));border-radius:var(--radius-lg);padding:22px;color:white;margin-bottom:14px;display:flex;align-items:center;gap:16px}
+.avatar{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.25);border:2px solid rgba(255,255,255,.4);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex-shrink:0}
+.plan-tag{display:inline-block;background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:white;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700;margin-top:4px}
+.prog-wrap{background:rgba(255,255,255,.25);border-radius:10px;height:6px;margin:5px 0;overflow:hidden}
+.prog-fill{height:100%;background:white;border-radius:10px}
+
+/* ══ PRICING ══ */
+.pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.pricing-card{background:var(--white);border:2px solid var(--border);border-radius:var(--radius-lg);padding:26px;text-align:center;position:relative;transition:.2s}
+.pricing-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.pricing-card.featured{border-color:var(--blue)}
+.popular-badge{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--blue);color:white;font-size:10px;font-weight:700;padding:3px 14px;border-radius:20px;white-space:nowrap}
+.plan-icon{font-size:30px;margin-bottom:10px}
+.plan-name{font-size:12px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.plan-price{font-size:30px;font-weight:800;color:var(--text);margin-bottom:4px;letter-spacing:-1px}
+.plan-price span{font-size:14px;font-weight:400;color:var(--text3)}
+.plan-feats{list-style:none;text-align:left;margin:14px 0;font-size:12px;color:var(--text2)}
+.plan-feats li{padding:5px 0;display:flex;gap:7px;border-bottom:1px solid var(--bg)}
+.plan-feats li::before{content:'✓';color:var(--green);flex-shrink:0;font-weight:700}
+
+/* ══ MISC ══ */
+.credit-box{background:var(--blue-ll);border:1px solid #BFDBFE;border-radius:8px;padding:10px 13px;margin-bottom:12px;display:flex;align-items:center;gap:9px;font-size:12px;color:var(--text2)}
+.credit-num{font-size:20px;font-weight:800;color:var(--blue)}
+.consent-box{background:var(--blue-ll);border:1px solid #BFDBFE;border-radius:8px;padding:12px 13px;margin-bottom:12px}
+.consent-label{display:flex;gap:8px;font-size:12px;color:var(--text2);cursor:pointer;line-height:1.6}
+.consent-label input{accent-color:var(--blue);margin-top:2px;flex-shrink:0}
+.check-row{display:flex;gap:8px;align-items:flex-start;font-size:12px;color:var(--text2);cursor:pointer;margin-bottom:9px}
+.check-row input{accent-color:var(--blue);margin-top:2px}
+.alert{border-radius:8px;padding:10px 13px;font-size:12px;margin-bottom:12px;display:flex;align-items:flex-start;gap:7px}
+.alert-green{background:#F0FDF4;border:1px solid #BBF7D0;color:#15803D}
+.alert-amber{background:#FFFBEB;border:1px solid #FDE68A;color:#B45309}
+.breadcrumb{font-size:12px;color:var(--text3);margin-bottom:12px;display:flex;align-items:center;gap:4px}
+.bc-link{color:var(--blue);cursor:pointer;font-weight:500}
+.bc-link:hover{text-decoration:underline}
+.bc-sep{color:var(--border2)}
+.notice-bar{background:#EFF6FF;border-bottom:1px solid #BFDBFE;padding:7px 0;font-size:12px;text-align:center;color:#1D4ED8;font-weight:500}
+
+/* ══ FOOTER ══ */
+footer{background:#0F172A;color:#94A3B8;padding:36px 0 0;margin-top:24px}
+.footer-inner{max-width:1200px;margin:0 auto;padding:0 24px}
+.footer-grid{display:grid;grid-template-columns:1.6fr 1fr 1fr 1fr 1fr;gap:28px;padding-bottom:28px;border-bottom:1px solid #1E293B}
+.footer-logo-wrap{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.footer-logo-icon{width:30px;height:30px;background:var(--blue);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:15px}
+.footer-logo-name{font-size:15px;font-weight:800;color:white;letter-spacing:-.3px}
+.footer-logo-name span{color:var(--blue)}
+.footer-desc{font-size:12px;color:#64748B;line-height:1.7;margin-bottom:14px}
+.contact-item{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.contact-bubble{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.cb-wa{background:linear-gradient(145deg,#25D366,#128C7E);box-shadow:0 3px 10px rgba(37,211,102,.4)}
+.cb-ms{background:linear-gradient(145deg,#0099FF,#0078FF,#A033FF);box-shadow:0 3px 10px rgba(0,120,255,.35)}
+.cb-wa svg,.cb-ms svg{width:18px;height:18px;fill:white}
+.contact-info{}
+.ci-label{font-size:10px;color:#475569;margin-bottom:1px;font-weight:500}
+.ci-val{font-size:12px;color:#94A3B8;font-weight:600}
+.ci-val:hover{color:white}
+.footer-col h4{color:white;font-size:11px;font-weight:700;margin-bottom:12px;letter-spacing:.4px;text-transform:uppercase}
+.footer-col a{display:block;color:#64748B;margin-bottom:8px;cursor:pointer;font-size:12px;transition:.15s}
+.footer-col a:hover{color:white}
+.social-row{display:flex;gap:8px;margin-top:14px}
+.social-ico{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-weight:700;color:white;font-size:11px;transition:.15s}
+.social-ico:hover{transform:translateY(-2px)}
+.s-fb{background:#1877F2}.s-yt{background:#FF0000}.s-wa{background:#25D366}.s-tg{background:#0088CC}.s-in{background:#0A66C2}
+.footer-bottom{padding:14px 0;display:flex;align-items:center;justify-content:space-between;font-size:11px;color:#334155;flex-wrap:wrap;gap:8px}
+.footer-bottom a{color:#475569;cursor:pointer}.footer-bottom a:hover{color:#94A3B8}
+
+/* ══ MODAL ══ */
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);z-index:400;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--white);border-radius:var(--radius-lg);max-width:440px;width:100%;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--shadow-lg)}
+.modal-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-header h3{font-size:15px;font-weight:700}
+.modal-body{padding:18px;overflow-y:auto}
+.modal-footer{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--bg)}
+.close-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--white);cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:13px}
+.close-btn:hover{background:var(--bg)}
+
+/* ══ TOAST ══ */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--text);color:white;padding:10px 18px;border-radius:10px;font-size:13px;z-index:9998;opacity:0;transition:.25s;max-width:280px;box-shadow:var(--shadow-lg);white-space:nowrap}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.success{background:var(--green)}
+.toast.error{background:var(--red)}
+
+@media(max-width:1024px){.books-grid{grid-template-columns:repeat(3,1fr)}.hero-section{grid-template-columns:1fr}.hero-side{display:none}.cat-grid{grid-template-columns:repeat(2,1fr)}.filter-row{grid-template-columns:repeat(2,1fr)}.footer-grid{grid-template-columns:repeat(2,1fr)}.pricing-grid{grid-template-columns:1fr}.layout{flex-direction:column}.sidebar{width:100%}}
+@media(max-width:600px){.books-grid{grid-template-columns:repeat(2,1fr)}.header-inner{flex-wrap:wrap}.search-bar{order:3;max-width:100%;flex:1 1 100%}.topbar{display:none}.form-row{grid-template-columns:1fr}.stats-row{grid-template-columns:1fr}.mode-grid{grid-template-columns:1fr}.cat-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<!-- ══ FLOATING CONTACT BUTTONS ══ -->
+<div class="float-root">
+  <div class="fbtn-row" id="row-wa">
+    <span class="ftip">WhatsApp</span>
+    <a href="https://wa.me/8801700000000" target="_blank" class="fbtn fwa fhide" id="btn-wa">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+    </a>
+  </div>
+  <div class="fbtn-row" id="row-ms">
+    <span class="ftip">Messenger</span>
+    <a href="https://m.me/booktranslateai" target="_blank" class="fbtn fms fhide" id="btn-ms">
+      <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.652V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.975 12-11.111C24 4.974 18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26L19.752 8.1l-6.561 6.863z"/></svg>
+    </a>
+  </div>
+  <div class="fbtn-row">
+    <span class="ftip">Contact Us</span>
+    <button class="ftoggle fpulse" id="ftog" onclick="ftoggle()">
+      <svg viewBox="0 0 24 24" style="width:28px;height:28px;fill:white;transition:transform .4s ease" id="ftog-icon"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12zM7 9h2v2H7zm4 0h2v2h-2zm4 0h2v2h-2z"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- ANN BAR -->
+<div class="ann-bar">
+  <div class="ann-dot"></div>
+  <span>New! AI-powered Summary & Key Points for any PDF — in Bengali</span>
+  <strong style="cursor:pointer;text-decoration:underline;margin-left:4px" onclick="requireLogin('upload')">Try Free →</strong>
+  <div class="ann-dot"></div>
+</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div style="display:flex;gap:18px;align-items:center">
+      <span style="display:flex;align-items:center;gap:5px">⏰ Working Hours: 10:30 AM – 12:30 AM (BD Time)</span>
+      <a class="topbar-link" href="#">✉️ support@booktranslate.ai</a>
+    </div>
+    <div style="display:flex;gap:14px">
+      <a class="topbar-link" onclick="showPage('home')">Home</a>
+      <a class="topbar-link" onclick="showPage('pricing')">Pricing</a>
+      <a class="topbar-link" id="tb-login" onclick="showPage('login')">Login</a>
+      <a class="topbar-link" id="tb-reg" onclick="showPage('register')">Register</a>
+      <a class="topbar-link" id="tb-out" onclick="logout()" style="display:none">Logout</a>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header>
+  <div class="header-inner">
+    <div class="logo" onclick="showPage('home')">
+      <div class="logo-icon">📚</div>
+      <div class="logo-text">Book Translate<span>AI</span></div>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input type="text" id="search-input" placeholder="Search books, authors, topics..." onkeydown="if(event.key==='Enter')doSearch()">
+    </div>
+    <div class="header-right">
+      <div class="icon-btn" title="Wishlist" onclick="showToast('Wishlist — coming soon!')">♡<div class="icon-badge">0</div></div>
+      <div class="icon-btn" title="Notifications" onclick="showToast('No new notifications')">🔔<div class="icon-badge">1</div></div>
+      <div id="hdr-auth" style="display:flex;gap:6px">
+        <button class="hbtn" onclick="showPage('login')">Login</button>
+        <button class="hbtn primary" onclick="showPage('register')">Sign Up Free</button>
+      </div>
+      <div id="hdr-user" style="display:none;gap:6px">
+        <button class="hbtn" onclick="showPage('profile')">👤 <span id="hdr-name">Profile</span></button>
+        <button class="hbtn primary" onclick="requireLogin('upload')">+ Translate PDF</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="notice-bar">🎉 First translation free — <strong style="cursor:pointer" onclick="requireLogin('upload')">Start now →</strong></div>
+
+<!-- SUBNAV -->
+<div class="subnav">
+  <div class="subnav-inner">
+    <div class="nav-item active" id="nav-home" onclick="showPage('home');setNav('nav-home')">🏠 Home</div>
+    <div class="nav-item dropdown">Authors <span class="arrow">▾</span>
+      <div class="dropdown-menu">
+        <div class="dd-item">📖 Rabindranath Tagore</div><div class="dd-item">📖 Bankim Chandra</div>
+        <div class="dd-item">📖 Sarat Chandra</div><div class="dd-item">📖 Bibhutibhushan</div>
+        <div class="dd-sep"></div><div class="dd-item" style="color:var(--blue);font-weight:600">View all authors →</div>
+      </div>
+    </div>
+    <div class="nav-item dropdown">Categories <span class="arrow">▾</span>
+      <div class="dropdown-menu">
+        <div class="dd-item">📚 Novels & Fiction</div><div class="dd-item">☪️ Islamic Books</div>
+        <div class="dd-item">🔬 Science & Tech</div><div class="dd-item">📜 History</div>
+        <div class="dd-sep"></div><div class="dd-item" style="color:var(--blue);font-weight:600">All categories →</div>
+      </div>
+    </div>
+    <div class="nav-item dropdown">Publishers <span class="arrow">▾</span>
+      <div class="dropdown-menu">
+        <div class="dd-item">Ananda Publishers</div><div class="dd-item">Prothoma Prokashon</div>
+        <div class="dd-item">Onnyo Prokash</div><div class="dd-sep"></div>
+        <div class="dd-item" style="color:var(--blue);font-weight:600">All publishers →</div>
+      </div>
+    </div>
+    <div class="nav-item" onclick="requireLogin('upload')">📤 Translate PDF</div>
+    <div class="nav-item" style="color:var(--blue);font-weight:600" onclick="requireLogin('upload')">📱 eBooks <span class="nav-badge">New</span></div>
+    <div class="nav-item dropdown" style="color:var(--red)">🎓 Admission Prep <span class="arrow">▾</span>
+      <div class="dropdown-menu">
+        <div class="dd-item">University Admission</div><div class="dd-item">Medical Entrance</div>
+        <div class="dd-item">SSC Preparation</div><div class="dd-item">HSC Preparation</div>
+        <div class="dd-sep"></div><div class="dd-item" style="color:var(--blue);font-weight:600">All prep books →</div>
+      </div>
+    </div>
+    <div class="nav-item" onclick="requireLogin('history')">📋 History</div>
+    <div class="nav-item" id="nav-pricing" onclick="showPage('pricing');setNav('nav-pricing')">💎 Pricing</div>
+  </div>
+</div>
+
+<!-- ══ HOME ══ -->
+<div class="page active" id="page-home">
+  <div class="main">
+    <div class="hero-section">
+      <div class="carousel-main">
+        <div class="carousel-slides" id="car-slides">
+          <div class="slide slide-1">
+            <div class="slide-content">
+              <div class="slide-tag">✨ AI-Powered Translation</div>
+              <div class="slide-title">Read Any Book in Bengali</div>
+              <div class="slide-sub">Upload your PDF — get AI Summary & Key Points in Bengali instantly</div>
+              <button class="slide-btn" onclick="requireLogin('upload')">📄 Start Translating</button>
+            </div>
+            <div class="slide-deco">📚</div>
+            <button class="car-prev" onclick="prevSlide()">‹</button>
+            <button class="car-next" onclick="nextSlide()">›</button>
+            <div class="car-dots"><div class="dot active" onclick="goSlide(0)"></div><div class="dot" onclick="goSlide(1)"></div><div class="dot" onclick="goSlide(2)"></div></div>
+          </div>
+          <div class="slide slide-2">
+            <div class="slide-content">
+              <div class="slide-tag">📖 Free Library</div>
+              <div class="slide-title">180+ Books Completely Free</div>
+              <div class="slide-sub">Bengali classics & Islamic texts — read without signing in</div>
+              <button class="slide-btn" onclick="scrollLib()">Browse Library</button>
+            </div>
+            <div class="slide-deco">📖</div>
+          </div>
+          <div class="slide slide-3">
+            <div class="slide-content">
+              <div class="slide-tag">💎 Pro Plan</div>
+              <div class="slide-title">Unlimited Translations</div>
+              <div class="slide-sub">Only ৳499/month — 12 languages, PDF download, priority AI</div>
+              <button class="slide-btn" onclick="showPage('pricing')">View Plans</button>
+            </div>
+            <div class="slide-deco">⚡</div>
+          </div>
+        </div>
+      </div>
+      <div class="hero-side">
+        <div class="hero-side-card" onclick="requireLogin('upload')">
+          <div class="hsc-icon" style="background:#EBF2FF">📋</div>
+          <div class="hsc-info"><h4>AI Summary Mode</h4><p>Chapter summaries & key points in Bengali from any PDF</p></div>
+        </div>
+        <div class="hero-side-card" onclick="openBook(1)">
+          <div class="hsc-icon" style="background:#FEF3C7">📜</div>
+          <div class="hsc-info"><h4>Bengali Classics</h4><p>Tagore, Bankim, Sarat — read for free</p></div>
+        </div>
+        <div class="quick-card">
+          <h4>Quick Translate</h4>
+          <p>Upload a PDF and get Bengali summary in minutes</p>
+          <button class="quick-btn" onclick="requireLogin('upload')">⚡ Translate Now →</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-row">
+      <div class="filter-card"><div class="fi-icon" style="background:#DCFCE7">📗</div><div><div class="fi-label">Free eBooks</div><div class="fi-sub">Read Now →</div></div></div>
+      <div class="filter-card"><div class="fi-icon" style="background:#EBF2FF">📋</div><div><div class="fi-label">AI Summary</div><div class="fi-sub">From ৳99 →</div></div></div>
+      <div class="filter-card"><div class="fi-icon" style="background:#FEF3C7">⭐</div><div><div class="fi-label">Key Points Only</div><div class="fi-sub">Concise →</div></div></div>
+      <div class="filter-card" onclick="showPage('pricing')"><div class="fi-icon" style="background:#F3E8FF">🚀</div><div><div class="fi-label">Pro Plan</div><div class="fi-sub" style="color:var(--green)">Unlimited →</div></div></div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card"><div class="stat-num">2,400+</div><div class="stat-label">Translations Completed</div></div>
+      <div class="stat-card"><div class="stat-num">180+</div><div class="stat-label">Free Books Available</div></div>
+      <div class="stat-card"><div class="stat-num">12</div><div class="stat-label">Supported Languages</div></div>
+    </div>
+
+    <div class="cat-section">
+      <div class="section-hd"><div class="section-title-wrap"><div class="sec-pill"></div><div class="sec-title">Browse by Category</div></div></div>
+      <div class="cat-grid">
+        <div class="cat-block"><div class="cat-header"><div class="cat-header-l"><div class="cat-ico" style="background:#EBF2FF">📚</div><div class="cat-title">Academic Books</div></div><span class="cat-see">All »</span></div><div class="cat-book-grid"><div class="cat-book"><div class="cat-cover" style="background:#EBF2FF">📐</div><div class="cat-name">Science Yr 1</div></div><div class="cat-book"><div class="cat-cover" style="background:#F3E8FF">📊</div><div class="cat-name">Humanities Yr 1</div></div><div class="cat-book"><div class="cat-cover" style="background:#F0FDF4">🧪</div><div class="cat-name">Chemistry Guide</div></div><div class="cat-book"><div class="cat-cover" style="background:#FEF9C3">📝</div><div class="cat-name">Commerce Dept.</div></div></div></div>
+        <div class="cat-block"><div class="cat-header"><div class="cat-header-l"><div class="cat-ico" style="background:#FEF3C7">☪️</div><div class="cat-title">Islamic Books</div></div><span class="cat-see">All »</span></div><div class="cat-book-grid"><div class="cat-book" onclick="openBook(6)"><div class="cat-cover" style="background:#F0FDF4">☪️</div><div class="cat-name">Riyad us-Saliheen</div></div><div class="cat-book" onclick="openBook(7)"><div class="cat-cover" style="background:#FEF3C7">📿</div><div class="cat-name">Hisnul Muslim</div></div><div class="cat-book" onclick="openBook(9)"><div class="cat-cover" style="background:#FFF1F2">✨</div><div class="cat-name">Ihya Ulum al-Din</div></div><div class="cat-book" onclick="openBook(10)"><div class="cat-cover" style="background:#F3E8FF">📖</div><div class="cat-name">Tafsir Ibn Kathir</div></div></div></div>
+        <div class="cat-block"><div class="cat-header"><div class="cat-header-l"><div class="cat-ico" style="background:#FFF1F2">📕</div><div class="cat-title">Novels & Fiction</div></div><span class="cat-see">All »</span></div><div class="cat-book-grid"><div class="cat-book" onclick="openBook(1)"><div class="cat-cover" style="background:#FEF3C7">📜</div><div class="cat-name">Golpoguccho</div></div><div class="cat-book" onclick="openBook(4)"><div class="cat-cover" style="background:#FFF1F2">💔</div><div class="cat-name">Devdas</div></div><div class="cat-book" onclick="openBook(3)"><div class="cat-cover" style="background:#F0FDF4">🏡</div><div class="cat-name">Pather Panchali</div></div><div class="cat-book" onclick="openBook(2)"><div class="cat-cover" style="background:#F3E8FF">🌸</div><div class="cat-name">Bishbriksha</div></div></div></div>
+        <div class="cat-block"><div class="cat-header"><div class="cat-header-l"><div class="cat-ico" style="background:#EBF2FF">🔤</div><div class="cat-title">Language & Dict.</div></div><span class="cat-see">All »</span></div><div class="cat-book-grid"><div class="cat-book"><div class="cat-cover" style="background:#EBF2FF">🔤</div><div class="cat-name">English Grammar</div></div><div class="cat-book"><div class="cat-cover" style="background:#FEF3C7">📔</div><div class="cat-name">Dictionary</div></div><div class="cat-book"><div class="cat-cover" style="background:#F0FDF4">🗣️</div><div class="cat-name">Language Learning</div></div><div class="cat-book"><div class="cat-cover" style="background:#FFF1F2">✍️</div><div class="cat-name">Essay Collection</div></div></div></div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="sidebar">
+        <div class="sidebar-card"><div class="sidebar-hd">📂 Categories</div><div class="sid-list"><div class="sid-item active" onclick="setActiveSid(this)">All Books <span class="sid-count">180</span></div><div class="sid-item" onclick="setActiveSid(this)">Bengali Classics <span class="sid-count">64</span></div><div class="sid-item" onclick="setActiveSid(this)">Islamic Books <span class="sid-count">48</span></div><div class="sid-item" onclick="setActiveSid(this)">Science & Tech <span class="sid-count">22</span></div><div class="sid-item" onclick="setActiveSid(this)">Novels <span class="sid-count">27</span></div></div></div>
+        <div class="sidebar-card"><div class="sidebar-hd">🌍 By Language</div><div class="sid-list"><div class="sid-item" onclick="setActiveSid(this)">English → Bengali</div><div class="sid-item" onclick="setActiveSid(this)">Arabic → Bengali</div><div class="sid-item" onclick="setActiveSid(this)">Urdu → Bengali</div><div class="sid-item" onclick="setActiveSid(this)">Hindi → Bengali</div></div></div>
+      </div>
+      <div class="content-area" id="lib-section">
+        <div class="section-block">
+          <div class="section-hd"><div class="section-title-wrap"><div class="sec-pill"></div><div class="sec-title">Bengali Literary Classics</div></div><span class="see-all-btn">View All</span></div>
+          <div class="books-grid" id="classic-grid"></div>
+        </div>
+        <div class="section-block">
+          <div class="section-hd"><div class="section-title-wrap"><div class="sec-pill"></div><div class="sec-title">Islamic Texts</div></div><span class="see-all-btn">View All</span></div>
+          <div class="books-grid" id="islamic-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ UPLOAD ══ -->
+<div class="page" id="page-upload">
+  <div class="main" style="max-width:660px">
+    <div class="breadcrumb"><span class="bc-link" onclick="showPage('home')">Home</span><span class="bc-sep">›</span><span>Translate PDF</span></div>
+    <div class="section-block">
+      <div class="section-hd"><div class="section-title-wrap"><div class="sec-pill"></div><div class="sec-title">1. Upload Your PDF</div></div></div>
+      <div class="upload-zone" onclick="triggerUpload()" id="drop-zone">
+        <div style="font-size:34px;margin-bottom:8px">📄</div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px">Drop your PDF here or click to browse</div>
+        <div style="font-size:12px;color:var(--text3)">Maximum 50 MB • PDF files only</div>
+      </div>
+      <input type="file" id="file-input" accept=".pdf" style="display:none" onchange="handleFile(event)">
+      <div id="file-sel" style="display:none;margin-top:10px">
+        <div style="background:var(--blue-ll);border:1px solid #BFDBFE;border-radius:8px;padding:10px 13px;display:flex;align-items:center;gap:10px">
+          <span style="font-size:18px">📄</span>
+          <div style="flex:1"><div id="fname" style="font-size:13px;font-weight:700"></div><div id="fsize" style="font-size:11px;color:var(--text3)"></div></div>
+          <button class="btn btn-ghost btn-sm" onclick="clearFile()">✕ Remove</button>
+        </div>
+      </div>
+    </div>
+    <div class="section-block">
+      <div class="section-hd"><div class="section-title-wrap"><div class="sec-pill"></div><div class="sec-title">2. Choose Translation Mode</div></div></div>
+      <div class="mode-grid">
+        <div class="mode-card selected" id="mode-summary" onclick="selectMode('summary')">
+          <div class="mode-check"></div>
+          <div class="mode-icon">📋</div>
+          <div class="mode-name">Summary + Key Points</div>
+          <div class="mode-desc">AI reads the book and extracts a summary and 7–10 key insights in Bengali. Fast & practical.</div>
+          <span class="mode-tag tag-ai">⚡ AI Recommended</span>
+        </div>
+        <div class="mode-card" id="mode-full" onclick="selectMode('full')">
+          <div class="mode-check"></div>
+          <div class="mode-icon">📖</div>
+          <div class="mode-name">Full Translation</div>
+          <div class="mode-desc">Every chapter translated completely into Bengali. Longer processing for large books.</div>
+          <span class="mode-tag tag-pro">💎 Pro Plan Required</span>
+        </div>
+      </div>
+      <div class="alert alert-green" id="mode-note"><span>✅</span><div><strong>Summary Mode:</strong> AI will generate chapter summary, key takeaways, and 7–10 important points in Bengali. Downloadable as PDF.</div></div>
+      <div class="form-row" style="margin-bottom:12px">
+        <div class="form-group"><label class="form-label">Source Language</label>
+          <select class="form-control" id="src-lang"><option value="en">English</option><option value="ar">Arabic</option><option value="ur">Urdu</option><option value="hi">Hindi</option><option value="fr">French</option><option value="de">German</option><option value="es">Spanish</option><option value="zh">Chinese</option></select>
+        </div>
+        <div class="form-group"><label class="form-label">Target Language</label>
+          <select class="form-control" id="tgt-lang"><option value="bn" selected>Bengali</option><option value="en">English</option></select>
+        </div>
+      </div>
+      <div class="consent-box"><label class="consent-label"><input type="checkbox" id="consent"> I confirm this content is in the public domain or I have the legal right to translate it. I take full responsibility for copyright compliance.</label></div>
+      <div class="credit-box"><div class="credit-num" id="cr-left">2</div><div>free translations remaining this month. <span style="color:var(--blue);font-weight:600;cursor:pointer" onclick="showPage('pricing')">Upgrade →</span></div></div>
+      <button class="btn btn-primary btn-lg btn-block" onclick="startTranslation()">⚡ Start AI Translation</button>
+    </div>
+    <div id="ai-loading-wrap" style="display:none">
+      <div class="section-block"><div class="ai-loading">
+        <div class="spinner"></div>
+        <div style="font-size:14px;font-weight:700;margin-bottom:4px">AI is working...</div>
+        <div style="font-size:12px;color:var(--text3)" id="ai-step-text">Analyzing PDF...</div>
+        <div class="ai-prog"><div class="ai-prog-fill" id="ai-prog-bar" style="width:0%"></div></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px" id="ai-prog-pct">0%</div>
+      </div></div>
+    </div>
+    <div id="ai-result-wrap" style="display:none">
+      <div class="ai-result">
+        <div class="ai-result-hd"><h3 id="result-title">Translation Result</h3><span id="result-mode-lbl">Summary Mode</span></div>
+        <div class="ai-result-body" id="ai-result-body"></div>
+        <div class="dl-bar"><div class="dl-info" id="dl-info">Download your result as PDF</div><button class="btn btn-primary" onclick="downloadPDF()">⬇ Download PDF</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ HISTORY ══ -->
+<div class="page" id="page-history">
+  <div class="main" style="max-width:760px">
+    <div class="breadcrumb"><span class="bc-link" onclick="showPage('home')">Home</span><span class="bc-sep">›</span><span>Translation History</span></div>
+    <div class="section-block"><div class="section-hd"><div class="section-title-wrap"><div class="sec-pill"></div><div class="sec-title">My Translation History</div></div></div><div id="hist-list"></div></div>
+  </div>
+</div>
+
+<!-- ══ READER ══ -->
+<div class="page" id="page-reader">
+  <div class="main">
+    <div class="breadcrumb"><span class="bc-link" onclick="showPage('home')">Home</span><span class="bc-sep">›</span><span class="bc-link" onclick="showPage('home')">Library</span><span class="bc-sep">›</span><span id="reader-bc-title">Book</span></div>
+    <div class="reader-layout">
+      <div class="reader-sidebar">
+        <div class="sidebar-card"><div class="sidebar-hd">📑 Table of Contents</div><div id="toc-list"></div></div>
+        <div class="sidebar-card" style="background:var(--blue-ll);border-color:#BFDBFE"><div class="sidebar-hd" style="border-color:#BFDBFE">⬇ Download</div><div style="padding:10px"><button class="btn btn-primary btn-block btn-sm" onclick="downloadPDF()">📄 Download PDF</button></div></div>
+        <div class="sidebar-card"><div class="sidebar-hd">⚙️ Reading Settings</div><div style="padding:10px"><div style="font-size:11px;color:var(--text3);margin-bottom:5px">Font Size</div><div style="display:flex;gap:6px;margin-bottom:8px"><button class="btn btn-ghost btn-sm" onclick="changeFontSize(-1)">A−</button><button class="btn btn-ghost btn-sm" onclick="changeFontSize(1)">A+</button></div><button class="btn btn-ghost btn-block btn-sm" onclick="openReport()">⚑ Report Content</button></div></div>
+      </div>
+      <div class="reader-main-area" id="reader-main"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ PROFILE ══ -->
+<div class="page" id="page-profile">
+  <div class="main" style="max-width:560px">
+    <div class="breadcrumb"><span class="bc-link" onclick="showPage('home')">Home</span><span class="bc-sep">›</span><span>My Profile</span></div>
+    <div class="profile-banner"><div class="avatar" id="p-avatar">B</div><div><div style="font-size:17px;font-weight:800;letter-spacing:-.3px" id="p-name">Reader</div><div style="font-size:12px;opacity:.75;margin-top:2px" id="p-email">user@example.com</div><div class="plan-tag">Free Plan</div></div></div>
+    <div class="section-block" style="margin-bottom:12px"><div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--blue)">📊 This Month's Usage</div><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:3px"><span>Translations used</span><span><strong>0</strong> / 2</span></div><div class="prog-wrap" style="background:var(--border)"><div class="prog-fill" style="background:var(--blue);width:0%"></div></div><div style="font-size:11px;color:var(--text3);margin-top:3px">Resets: August 1, 2025</div><button class="btn btn-primary btn-sm" style="margin-top:10px" onclick="showPage('pricing')">⬆ Upgrade to Pro</button></div>
+    <div class="section-block"><div style="font-size:13px;font-weight:700;margin-bottom:12px">✏️ Edit Profile</div><div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="e-name" value="Reader"></div><div class="form-group"><label class="form-label">Email</label><input class="form-control" id="e-email" value="user@example.com"></div><div style="display:flex;gap:8px;margin-top:4px"><button class="btn btn-primary" onclick="saveProfile()">Save Changes</button><button class="btn btn-ghost" onclick="showPage('home')">Cancel</button></div></div>
+  </div>
+</div>
+
+<!-- ══ PRICING ══ -->
+<div class="page" id="page-pricing">
+  <div class="main">
+    <div style="text-align:center;margin-bottom:26px"><h2 style="font-size:24px;font-weight:800;letter-spacing:-.5px;margin-bottom:6px">Choose Your Plan</h2><p style="font-size:14px;color:var(--text3)">Start free, upgrade when you're ready</p></div>
+    <div class="pricing-grid">
+      <div class="pricing-card"><div class="plan-icon">🆓</div><div class="plan-name">Free</div><div class="plan-price">৳0<span>/month</span></div><ul class="plan-feats"><li>2 AI Summaries per month</li><li>180+ free eBooks</li><li>Bengali target language</li><li>PDF download</li><li>30-day history</li></ul><button class="btn btn-outline btn-block" onclick="showPage('register')">Get Started Free</button></div>
+      <div class="pricing-card featured"><div class="popular-badge">Most Popular</div><div class="plan-icon">⚡</div><div class="plan-name" style="color:var(--blue)">Pro</div><div class="plan-price" style="color:var(--blue)">৳499<span>/month</span></div><ul class="plan-feats"><li>Unlimited AI summaries</li><li>Full book translation</li><li>12 source languages</li><li>Advanced AI model</li><li>Priority processing</li><li>Lifetime history</li><li>PDF download</li></ul><button class="btn btn-primary btn-block" onclick="showToast('Payment gateway coming soon!','success')">Upgrade to Pro</button></div>
+      <div class="pricing-card"><div class="plan-icon">🎓</div><div class="plan-name" style="color:var(--amber)">Scholar</div><div class="plan-price">৳1,299<span>/month</span></div><ul class="plan-feats"><li>Everything in Pro</li><li>Team sharing (5 members)</li><li>API access</li><li>Custom translation style</li><li>Classroom tools</li></ul><button class="btn btn-ghost btn-block" onclick="showToast('Coming soon!')">Get Scholar</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ LOGIN ══ -->
+<div class="page" id="page-login">
+  <div class="auth-wrap"><div class="auth-card"><div class="auth-top"><div class="auth-logo">📚</div><h2>Welcome back</h2><p>Sign in to Book Translate AI</p></div><div class="auth-body"><div class="form-group"><label class="form-label">Email address</label><input class="form-control" id="l-email" placeholder="you@example.com"></div><div class="form-group"><label class="form-label">Password</label><input class="form-control" type="password" id="l-pass" placeholder="••••••••"></div><button class="btn btn-primary btn-lg btn-block" onclick="doLogin()" style="margin-bottom:12px">Sign In</button><div class="auth-footer">Don't have an account? <a onclick="showPage('register')">Sign up free</a></div><div style="text-align:center;margin-top:8px;font-size:11px;color:var(--text3)">Demo: any email + any password</div></div></div></div>
+</div>
+
+<!-- ══ REGISTER ══ -->
+<div class="page" id="page-register">
+  <div class="auth-wrap"><div class="auth-card"><div class="auth-top"><div class="auth-logo">📚</div><h2>Create your account</h2><p>Start translating for free</p></div><div class="auth-body"><div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="r-name" placeholder="Your full name"></div><div class="form-group"><label class="form-label">Email</label><input class="form-control" id="r-email" placeholder="you@example.com"></div><div class="form-group"><label class="form-label">Password</label><input class="form-control" type="password" id="r-pass" placeholder="Min. 8 characters"></div><button class="btn btn-primary btn-lg btn-block" onclick="doRegister()" style="margin-bottom:12px">Create Account</button><div class="auth-footer">Already have an account? <a onclick="showPage('login')">Sign in</a></div></div></div></div>
+</div>
+
+<!-- ══ FOOTER ══ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-logo-wrap"><div class="footer-logo-icon">📚</div><div class="footer-logo-name">Book Translate<span>AI</span></div></div>
+        <div class="footer-desc">Bangladesh's most advanced AI-powered eBook translation platform. Read books from any language in Bengali.</div>
+        <div>
+          <div class="contact-item">
+            <div class="contact-bubble cb-wa">
+              <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+            </div>
+            <div class="contact-info"><div class="ci-label">WhatsApp (Message Only)</div><a href="https://wa.me/8801700000000" class="ci-val" style="text-decoration:none">+880 1700-000000</a></div>
+          </div>
+          <div class="contact-item">
+            <div class="contact-bubble cb-ms">
+              <svg viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 4.974 0 11.111c0 3.498 1.744 6.614 4.469 8.652V24l4.088-2.242c1.092.301 2.246.464 3.443.464 6.627 0 12-4.975 12-11.111C24 4.974 18.627 0 12 0zm1.191 14.963l-3.055-3.26-5.963 3.26L10.732 8.1l3.131 3.26L19.752 8.1l-6.561 6.863z"/></svg>
+            </div>
+            <div class="contact-info"><div class="ci-label">Messenger</div><a href="https://m.me/booktranslateai" class="ci-val" style="text-decoration:none">m.me/booktranslateai</a></div>
+          </div>
+          <div class="contact-item"><span>✉️</span><a href="mailto:support@booktranslate.ai" class="ci-val" style="text-decoration:none;color:#64748B">support@booktranslate.ai</a></div>
+          <div class="contact-item"><span>📍</span><span style="color:#64748B;font-size:12px">Dhaka, Bangladesh</span></div>
+        </div>
+        <div class="social-row">
+          <div class="social-ico s-fb">f</div><div class="social-ico s-yt">▶</div>
+          <div class="social-ico s-wa">W</div><div class="social-ico s-tg">✈</div><div class="social-ico s-in">in</div>
+        </div>
+      </div>
+      <div class="footer-col"><h4>Platform</h4><a onclick="showPage('home')">Free Library</a><a onclick="requireLogin('upload')">Translate PDF</a><a onclick="showPage('pricing')">Pricing</a><a onclick="requireLogin('history')">My History</a><a onclick="requireLogin('profile')">My Account</a></div>
+      <div class="footer-col"><h4>Library</h4><a>Bengali Classics</a><a>Islamic Books</a><a>Academic Books</a><a>eBooks</a><a>Admission Prep</a></div>
+      <div class="footer-col"><h4>Support</h4><a>FAQ</a><a>How It Works</a><a>User Guide</a><a onclick="openReport()">Report Content</a></div>
+      <div class="footer-col"><h4>Legal</h4><a>Privacy Policy</a><a>Copyright Policy</a><a>Terms of Service</a><a>Refund Policy</a></div>
+    </div>
+    <div class="footer-bottom"><span>© 2025 Book Translate AI — All rights reserved</span><span style="display:flex;gap:8px"><a>Privacy</a> | <a>Terms</a> | <a onclick="openReport()">Report</a></span></div>
+  </div>
+</footer>
+
+<!-- REPORT MODAL -->
+<div id="report-overlay" class="overlay" style="display:none" onclick="if(event.target===this)closeReport()">
+  <div class="modal">
+    <div class="modal-header"><h3>Report Content</h3><button class="close-btn" onclick="closeReport()">✕</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Reason</label><select class="form-control"><option>Copyright Violation</option><option>Inappropriate Content</option><option>Incorrect Translation</option><option>Other</option></select></div>
+      <div class="form-group"><label class="form-label">Details (optional)</label><input class="form-control" placeholder="Describe the issue..."></div>
+      <div class="alert alert-amber"><span>⚠️</span><span>Our team will review this report. For copyright violations, we act immediately.</span></div>
+    </div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="closeReport()">Cancel</button><button class="btn btn-primary" onclick="submitReport()">Submit Report</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── FLOATING BUTTONS ──
+let fopen=false;
+const fwa=document.getElementById('btn-wa');
+const fms=document.getElementById('btn-ms');
+const ftog=document.getElementById('ftog');
+const ftogIcon=document.getElementById('ftog-icon');
+
+function ftoggle(){
+  fopen=!fopen;
+  ftog.classList.toggle('fopen',fopen);
+  ftog.classList.toggle('fpulse',!fopen);
+  if(fopen){
+    // animate in: WA first, then MS
+    setTimeout(()=>{
+      fwa.classList.remove('fhide');
+      fwa.style.transform='scale(1)';
+    },0);
+    setTimeout(()=>{
+      fms.classList.remove('fhide');
+      fms.style.transform='scale(1)';
+    },90);
+  } else {
+    fms.classList.add('fhide');
+    setTimeout(()=>fwa.classList.add('fhide'),80);
+  }
+}
+
+// ── APP STATE ──
+const S={user:null,credits:2,history:[],fontSize:15,mode:'summary'};
+
+const classics=[
+  {id:1,emoji:'📜',bg:'#FEF3C7',title:'Golpoguccho',author:'Rabindranath Tagore',type:'classic',rating:4.8,reviews:'1,234'},
+  {id:2,emoji:'🌸',bg:'#FFF1F2',title:'Bishbriksha',author:'Bankim Chandra',type:'classic',rating:4.6,reviews:'897'},
+  {id:3,emoji:'🏡',bg:'#F0FDF4',title:'Pather Panchali',author:'Bibhutibhushan Bandyopadhyay',type:'classic',rating:4.9,reviews:'2,108'},
+  {id:4,emoji:'💔',bg:'#EBF2FF',title:'Devdas',author:'Sarat Chandra Chattopadhyay',type:'classic',rating:4.7,reviews:'1,567'},
+  {id:5,emoji:'🌿',bg:'#F3E8FF',title:'Charitraheen',author:'Sarat Chandra Chattopadhyay',type:'classic',rating:4.5,reviews:'789'},
+];
+const islamics=[
+  {id:6,emoji:'☪️',bg:'#F0FDF4',title:'Riyad us-Saliheen',author:'Imam Nawawi (R)',type:'islamic',rating:5.0,reviews:'3,456'},
+  {id:7,emoji:'📿',bg:'#FEF3C7',title:'Hisnul Muslim',author:'Said Ibn Ali',type:'islamic',rating:4.9,reviews:'2,876'},
+  {id:8,emoji:'🌙',bg:'#EBF2FF',title:'Fiqh us-Sunnah',author:'Sayyid Sabiq',type:'islamic',rating:4.8,reviews:'1,984'},
+  {id:9,emoji:'✨',bg:'#FFF1F2',title:'Ihya Ulum al-Din',author:'Imam Al-Ghazali (R)',type:'islamic',rating:4.9,reviews:'2,123'},
+  {id:10,emoji:'📖',bg:'#F3E8FF',title:'Tafsir Ibn Kathir',author:'Ibn Kathir (R)',type:'islamic',rating:5.0,reviews:'4,567'},
+];
+const histDef=[
+  {id:1,titleBn:'Introduction to Machine Learning',date:'Jun 20, 2025',pages:'Summary • 8 points',lang:'English → Bengali',emoji:'🤖',mode:'summary'},
+  {id:2,titleBn:'Climate Change Report 2024',date:'Jun 15, 2025',pages:'Summary • 12 points',lang:'English → Bengali',emoji:'🌍',mode:'summary'},
+];
+
+function starsHtml(r){let s='';for(let i=0;i<5;i++)s+=i<Math.round(r)?'★':'☆';return s;}
+
+function renderBooks(list,cid){
+  document.getElementById(cid).innerHTML=list.map(b=>`
+    <div class="book-card" onclick="openBook(${b.id})">
+      <button class="report-btn" onclick="event.stopPropagation();openReport()">⚑</button>
+      <div class="book-cover"><div class="book-cover-inner" style="background:${b.bg}">${b.emoji}</div>
+        <div class="book-tag ${b.type==='islamic'?'tag-islamic':'tag-classic'}">${b.type==='islamic'?'Islamic':'Classic'}</div>
+      </div>
+      <div class="book-info">
+        <div class="book-title">${b.title}</div>
+        <div class="book-author">${b.author}</div>
+        <div class="book-stars"><span class="stars">${starsHtml(b.rating)}</span><span class="star-count">(${b.reviews})</span></div>
+        <div class="book-price">Free</div>
+      </div>
+      <div class="book-actions"><button class="btn-read" onclick="event.stopPropagation();openBook(${b.id})">Read</button><button class="btn-wish">♡</button></div>
+    </div>`).join('');
+}
+
+function selectMode(m){
+  S.mode=m;
+  document.getElementById('mode-summary').classList.toggle('selected',m==='summary');
+  document.getElementById('mode-full').classList.toggle('selected',m==='full');
+  const n=document.getElementById('mode-note');
+  if(m==='summary'){n.className='alert alert-green';n.innerHTML='<span>✅</span><div><strong>Summary Mode:</strong> AI will create chapter summary, key takeaways, and 7–10 important points in Bengali. Downloadable as PDF.</div>';}
+  else{n.className='alert alert-amber';n.innerHTML='<span>⚠️</span><div><strong>Full Mode requires Pro Plan.</strong> Every chapter fully translated. <span style="color:var(--blue);cursor:pointer;font-weight:600" onclick="showPage(\'pricing\')">Upgrade →</span></div>';}
+}
+
+async function startTranslation(){
+  if(!S.file){showToast('Please upload a PDF file first','error');return;}
+  if(!document.getElementById('consent').checked){showToast('Please confirm copyright consent','error');return;}
+  if(S.mode==='full'&&!S.user?.pro){showToast('Full translation requires Pro Plan','error');showPage('pricing');return;}
+  if(S.credits<=0){showToast('Monthly limit reached. Please upgrade.','error');showPage('pricing');return;}
+  document.getElementById('ai-result-wrap').style.display='none';
+  document.getElementById('ai-loading-wrap').style.display='block';
+  const steps=['Analyzing PDF structure...','Identifying chapters...','AI reading content...','Generating Bengali summary...','Extracting key points...','Finalizing PDF...'];
+  let step=0;
+  const bar=document.getElementById('ai-prog-bar'),pct=document.getElementById('ai-prog-pct'),stepEl=document.getElementById('ai-step-text');
+  const iv=setInterval(()=>{
+    step++;const p=Math.min(step/steps.length*100,100);
+    bar.style.width=p+'%';pct.textContent=Math.round(p)+'%';stepEl.textContent=steps[Math.min(step-1,steps.length-1)];
+    if(step>=steps.length){clearInterval(iv);setTimeout(()=>callClaudeAPI(),300);}
+  },700);
+}
+
+async function callClaudeAPI(){
+  const fname=S.file?S.file.name.replace('.pdf',''):'Book';
+  document.getElementById('ai-step-text').textContent='Claude AI generating Bengali summary...';
+  document.getElementById('ai-prog-bar').style.width='92%';
+  const prompt=`You are a Bengali translation expert. For a book titled "${fname}", generate a JSON response with Bengali summary and key points. Respond ONLY with valid JSON:\n{\n  "title": "${fname}",\n  "summary": "Write a 3-4 sentence summary in Bengali about what this book likely covers based on its title.",\n  "keyPoints": ["Point 1 in Bengali","Point 2 in Bengali","Point 3 in Bengali","Point 4 in Bengali","Point 5 in Bengali","Point 6 in Bengali","Point 7 in Bengali"],\n  "sourceLanguage": "English",\n  "targetLanguage": "Bengali",\n  "totalPoints": 7\n}`;
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data=await resp.json();
+    const text=data.content?.[0]?.text||'';
+    let result;
+    try{result=JSON.parse(text.replace(/```json|```/g,'').trim());}catch(e){result=getFallback(fname);}
+    showResult(result);
+  }catch(e){showResult(getFallback(fname));}
+}
+
+function getFallback(fname){
+  return{title:fname,summary:'এই বইটি মানব জীবনের গভীর দিকগুলো নিয়ে আলোচনা করে। লেখক সমাজের বিভিন্ন স্তরের মানুষের জীবনযাত্রা এবং তাদের স্বপ্ন ও বাস্তবতার মধ্যে সংঘাত চমৎকারভাবে তুলে ধরেছেন। পাঠক এই বই থেকে জীবন সম্পর্কে নতুন দৃষ্টিভঙ্গি অর্জন করতে পারবেন।',keyPoints:['মানব সম্পর্কের জটিলতা এবং সামাজিক বন্ধনের গুরুত্ব বিশ্লেষণ করা হয়েছে','ব্যক্তিগত স্বাধীনতা ও সামাজিক দায়বদ্ধতার মধ্যে ভারসাম্যের প্রশ্ন','লেখকের মূল বক্তব্য হলো জীবনের প্রতিটি অভিজ্ঞতাই শিক্ষার সুযোগ','সংকটময় পরিস্থিতিতে মানুষের আসল চরিত্র প্রকাশ পায়','প্রতিকূলতাকে জয় করার শক্তি মানুষের ভেতরেই লুকিয়ে আছে','পারস্পরিক সহযোগিতা ও বিশ্বাসই সমাজের মূল ভিত্তি','জ্ঞান অর্জনই সকল সমস্যার সমাধানের পথ খুলে দেয়'],sourceLanguage:'English',targetLanguage:'Bengali',totalPoints:7};
+}
+
+function showResult(result){
+  document.getElementById('ai-loading-wrap').style.display='none';
+  document.getElementById('ai-result-wrap').style.display='block';
+  document.getElementById('result-title').textContent=result.title;
+  document.getElementById('result-mode-lbl').textContent='Summary • '+result.totalPoints+' Key Points';
+  document.getElementById('dl-info').textContent='Summary + '+result.totalPoints+' key points as PDF';
+  document.getElementById('ai-result-body').innerHTML=`
+    <div class="res-section"><div class="res-label sum">📋 Bengali Summary</div><div class="res-text bn">${result.summary}</div></div>
+    <div class="res-section"><div class="res-label kp">⭐ Key Points</div>${result.keyPoints.map((p,i)=>`<div class="kp-item bn"><span class="kp-num">${i+1}.</span>${p}</div>`).join('')}</div>
+    <div class="res-section"><div class="res-label meta">📄 Translation Info</div><div class="meta-grid"><div class="meta-box"><div class="meta-box-label">Source</div><div class="meta-box-val">${result.sourceLanguage}</div></div><div class="meta-box"><div class="meta-box-label">Target</div><div class="meta-box-val">${result.targetLanguage}</div></div><div class="meta-box"><div class="meta-box-label">Key Points</div><div class="meta-box-val">${result.totalPoints}</div></div><div class="meta-box"><div class="meta-box-label">Mode</div><div class="meta-box-val">AI Summary</div></div></div></div>`;
+  S.credits=Math.max(0,S.credits-1);document.getElementById('cr-left').textContent=S.credits;
+  const ni={id:Date.now(),titleBn:result.title,date:new Date().toLocaleDateString('en-GB'),pages:'Summary • '+result.totalPoints+' points',lang:result.sourceLanguage+' → '+result.targetLanguage,emoji:'📋',mode:'summary',rd:result};
+  S.history.unshift(ni);S.file=null;document.getElementById('file-sel').style.display='none';document.getElementById('file-input').value='';
+  showToast('AI Summary ready! ✓','success');
+  document.getElementById('ai-result-wrap').scrollIntoView({behavior:'smooth'});
+}
+
+function downloadPDF(){
+  const h=S.history[0];const rd=h?.rd;
+  if(!rd){showToast('PDF downloading...','success');return;}
+  const w=window.open('','_blank','width=720,height=920');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><link href="https://fonts.googleapis.com/css2?family=Noto+Serif+Bengali:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Inter',sans-serif;margin:0;padding:40px;max-width:640px;color:#0F172A;line-height:1.7}.hdr{background:linear-gradient(135deg,#1877F2,#0EA5E9);color:white;padding:22px 26px;border-radius:12px;margin-bottom:22px}.hdr h1{font-size:19px;font-weight:800;margin-bottom:4px;letter-spacing:-.3px}.hdr p{font-size:12px;opacity:.8}.lbl{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:8px;margin-top:18px;color:#64748B}.sum{background:#EFF6FF;border-left:4px solid #1877F2;padding:14px;border-radius:0 8px 8px 0;font-family:'Noto Serif Bengali',serif;font-size:15px;line-height:1.9;color:#1E3A5F}.kp{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:8px;padding:10px 13px;margin-bottom:7px;display:flex;gap:9px;font-family:'Noto Serif Bengali',serif;font-size:14px;color:#334155}.kpn{color:#1877F2;font-weight:700;flex-shrink:0;font-size:12px}.mg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.mb{background:#F8FAFC;border-radius:8px;padding:10px 12px}.mb p{font-size:10px;color:#94A3B8;margin-bottom:2px;text-transform:uppercase;letter-spacing:.4px}.mb strong{font-size:13px}.ft{margin-top:30px;padding-top:14px;border-top:1px solid #E2E8F0;font-size:11px;color:#94A3B8;text-align:center}@media print{body{padding:20px}}</style></head><body><div class="hdr"><h1>📋 ${rd.title}</h1><p>AI-Generated Bengali Summary • Book Translate AI</p></div><div class="lbl">Bengali Summary</div><div class="sum">${rd.summary}</div><div class="lbl" style="margin-top:20px">Key Points (${rd.totalPoints})</div>${rd.keyPoints.map((p,i)=>`<div class="kp"><span class="kpn">${i+1}.</span>${p}</div>`).join('')}<div class="lbl" style="margin-top:20px">Translation Details</div><div class="mg"><div class="mb"><p>Source</p><strong>${rd.sourceLanguage}</strong></div><div class="mb"><p>Target</p><strong>${rd.targetLanguage}</strong></div><div class="mb"><p>Points</p><strong>${rd.totalPoints}</strong></div><div class="mb"><p>Date</p><strong>${new Date().toLocaleDateString('en-GB')}</strong></div></div><div class="ft">Book Translate AI — booktranslate.ai</div><script>window.onload=()=>window.print()<\/script></body></html>`);w.document.close();
+}
+
+function openBook(id){
+  const book=[...classics,...islamics].find(b=>b.id===id);if(!book)return;
+  document.getElementById('reader-bc-title').textContent=book.title;renderReader(book);showPage('reader');
+}
+
+function renderReader(book){
+  const toc=['Introduction','Chapter 1','Chapter 2','Chapter 3','Conclusion'];
+  document.getElementById('toc-list').innerHTML=toc.map((t,i)=>`<div class="toc-item ${i===1?'active':''}" onclick="setActiveToc(this)"><span class="toc-num">${i+1}</span>${t}</div>`).join('');
+  document.getElementById('reader-main').innerHTML=`<div class="reader-card"><div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border)"><div style="width:48px;height:64px;background:${book.bg};border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:24px;border:1px solid var(--border)">${book.emoji}</div><div><div style="font-size:16px;font-weight:800;margin-bottom:2px;letter-spacing:-.2px">${book.title}</div><div style="font-size:12px;color:var(--text3)">${book.author} • Bengali Translation • Chapter 1/12</div><div style="margin-top:3px"><span class="stars" style="font-size:11px">${starsHtml(book.rating)}</span></div></div></div><div class="sum-block"><div class="sum-lbl">Chapter Summary</div><div class="sum-txt bn">এই অধ্যায়ে লেখক মানব জীবনের গভীর বাস্তবতা তুলে ধরেছেন। পরিবার, সমাজ ও ব্যক্তির মধ্যে সম্পর্কের টানাপোড়েন এই গল্পের মূল উপজীব্য।</div></div><div class="kp-block"><div class="kp-lbl">Key Points</div><div class="kp-row bn">পরিবারের বন্ধন এবং সামাজিক দায়িত্বের মধ্যে দ্বন্দ্ব চিত্রিত হয়েছে</div><div class="kp-row bn">মানুষের স্বপ্ন ও বাস্তবতার মধ্যে পার্থক্য স্পষ্টভাবে উপস্থাপিত</div><div class="kp-row bn">নারী চরিত্রের মনোজগৎ অত্যন্ত সূক্ষ্মভাবে বিশ্লেষণ করা হয়েছে</div></div><div class="body-text" id="body-txt" style="font-size:${S.fontSize}px"><p class="bn">সেদিন সন্ধ্যাবেলায় <span class="hl">আলোকময় আকাশের</span> নিচে দাঁড়িয়ে রমেশ ভাবছিল। তার মনে হচ্ছিল জীবন একটি <span class="wd">পরিব্রাজক<span class="tip-wd">wanderer</span></span> — সে জানে না কোথায় যাচ্ছে।</p><p class="bn">গ্রামের <span class="hl">প্রাচীন বটবৃক্ষের</span> ছায়ায় বসে সে ভাবতে লাগল তার শৈশবের কথা।</p></div><div style="display:flex;gap:8px;margin-top:16px;padding-top:12px;border-top:1px solid var(--border);flex-wrap:wrap"><button class="btn btn-ghost" onclick="showPage('home')">← Back</button><button class="btn btn-outline btn-sm">← Prev</button><button class="btn btn-primary btn-sm">Next →</button></div></div>`;
+}
+
+function setActiveToc(el){document.querySelectorAll('.toc-item').forEach(i=>i.classList.remove('active'));el.classList.add('active');}
+function changeFontSize(d){S.fontSize=Math.max(12,Math.min(22,S.fontSize+d));const el=document.getElementById('body-txt');if(el)el.style.fontSize=S.fontSize+'px';}
+
+function renderHistory(){
+  const all=[...histDef,...S.history];
+  const c=document.getElementById('hist-list');
+  if(!all.length){c.innerHTML=`<div style="text-align:center;padding:40px;color:var(--text3)"><div style="font-size:40px;margin-bottom:10px">📭</div><div style="font-weight:600;margin-bottom:4px">No translations yet</div><div style="font-size:12px;margin-bottom:14px">Upload a PDF to get started</div><button class="btn btn-primary btn-sm" onclick="showPage('upload')">Start Translating</button></div>`;return;}
+  c.innerHTML=all.map(h=>`<div class="hist-row" onclick="openHistItem(${h.id})"><div class="hist-ico">${h.emoji}</div><div class="hist-info"><div class="hist-title">${h.titleBn}<span class="hist-badge ${h.mode==='summary'?'hb-sum':'hb-full'}">${h.mode==='summary'?'Summary':'Full'}</span></div><div class="hist-meta">${h.date} • ${h.pages} • ${h.lang}</div></div><div style="display:flex;gap:6px"><button class="btn btn-outline btn-sm" onclick="event.stopPropagation();downloadPDF()">⬇ PDF</button><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();deleteHist(${h.id})">🗑</button></div></div>`).join('');
+}
+
+function openHistItem(id){
+  const h=[...histDef,...S.history].find(x=>x.id===id);if(!h)return;
+  if(h.rd){showPage('upload');setTimeout(()=>{document.getElementById('ai-result-wrap').style.display='block';document.getElementById('result-title').textContent=h.rd.title;document.getElementById('result-mode-lbl').textContent='Summary Mode';document.getElementById('ai-result-body').innerHTML=`<div class="res-section"><div class="res-label sum">📋 Bengali Summary</div><div class="res-text bn">${h.rd.summary}</div></div><div class="res-section"><div class="res-label kp">⭐ Key Points</div>${h.rd.keyPoints.map((p,i)=>`<div class="kp-item bn"><span class="kp-num">${i+1}.</span>${p}</div>`).join('')}</div>`;},50);}
+  else{const fake={id:h.id,emoji:h.emoji,title:h.titleBn,author:'AI Translation',bg:'#EBF2FF',rating:5};document.getElementById('reader-bc-title').textContent=fake.title;renderReader(fake);showPage('reader');}
+}
+function deleteHist(id){S.history=S.history.filter(h=>h.id!==id);renderHistory();showToast('Deleted successfully');}
+
+function showPage(p){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById('page-'+p).classList.add('active');window.scrollTo(0,0);if(p==='history')renderHistory();}
+function setNav(id){document.querySelectorAll('.nav-item').forEach(x=>x.classList.remove('active'));const el=document.getElementById(id);if(el)el.classList.add('active');}
+function scrollLib(){showPage('home');setTimeout(()=>{const el=document.getElementById('lib-section');if(el)el.scrollIntoView({behavior:'smooth'});},100);}
+function setActiveSid(el){document.querySelectorAll('.sid-item').forEach(x=>x.classList.remove('active'));el.classList.add('active');}
+function requireLogin(p){if(S.user){showPage(p);setNav('nav-'+p);}else{showPage('login');}}
+
+function doLogin(){const e=document.getElementById('l-email').value,p=document.getElementById('l-pass').value;if(!e||!p){showToast('Please fill in all fields','error');return;}S.user={name:e.split('@')[0],email:e};updateAuthUI();showPage('home');showToast('Signed in successfully ✓','success');}
+function doRegister(){const n=document.getElementById('r-name').value||'Reader',e=document.getElementById('r-email').value,p=document.getElementById('r-pass').value;if(!e||!p){showToast('Please fill in all fields','error');return;}S.user={name:n,email:e};updateAuthUI();showPage('home');showToast('Account created! Welcome 🎉','success');}
+function logout(){S.user=null;updateAuthUI();showPage('home');showToast('Signed out');}
+
+function updateAuthUI(){
+  const ha=document.getElementById('hdr-auth'),hu=document.getElementById('hdr-user');
+  const tbl=document.getElementById('tb-login'),tbr=document.getElementById('tb-reg'),tbo=document.getElementById('tb-out');
+  if(S.user){ha.style.display='none';hu.style.display='flex';tbl.style.display='none';tbr.style.display='none';tbo.style.display='inline';document.getElementById('hdr-name').textContent=S.user.name;document.getElementById('p-name').textContent=S.user.name;document.getElementById('p-email').textContent=S.user.email;document.getElementById('p-avatar').textContent=S.user.name.charAt(0).toUpperCase();document.getElementById('e-name').value=S.user.name;document.getElementById('e-email').value=S.user.email;}
+  else{ha.style.display='flex';hu.style.display='none';tbl.style.display='inline';tbr.style.display='inline';tbo.style.display='none';}
+}
+
+function triggerUpload(){document.getElementById('file-input').click();}
+function handleFile(e){const f=e.target.files[0];if(!f)return;if(f.type!=='application/pdf'){showToast('Only PDF files accepted','error');return;}S.file=f;document.getElementById('file-sel').style.display='block';document.getElementById('fname').textContent=f.name;document.getElementById('fsize').textContent=(f.size/1024/1024).toFixed(2)+' MB';document.getElementById('ai-result-wrap').style.display='none';}
+function clearFile(){S.file=null;document.getElementById('file-sel').style.display='none';document.getElementById('file-input').value='';}
+function saveProfile(){if(S.user){S.user.name=document.getElementById('e-name').value;S.user.email=document.getElementById('e-email').value;updateAuthUI();showToast('Profile saved ✓','success');}}
+function doSearch(){const q=document.getElementById('search-input').value;if(q)showToast('Searching: '+q);}
+function openReport(){document.getElementById('report-overlay').style.display='flex';}
+function closeReport(){document.getElementById('report-overlay').style.display='none';}
+function submitReport(){closeReport();showToast('Report submitted. Thank you!','success');}
+function showToast(msg,type){const t=document.getElementById('toast');t.textContent=msg;t.className='toast'+(type?' '+type:'');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+
+// Carousel
+let curSlide=0;
+function updateCarousel(){document.getElementById('car-slides').style.transform=`translateX(-${curSlide*100}%)`;document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===curSlide));}
+function nextSlide(){curSlide=(curSlide+1)%3;updateCarousel();}
+function prevSlide(){curSlide=(curSlide+2)%3;updateCarousel();}
+function goSlide(n){curSlide=n;updateCarousel();}
+setInterval(nextSlide,5000);
+
+// Drag & drop
+const dz=document.getElementById('drop-zone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');const f=e.dataTransfer.files[0];if(f&&f.type==='application/pdf'){S.file=f;document.getElementById('file-sel').style.display='block';document.getElementById('fname').textContent=f.name;document.getElementById('fsize').textContent=(f.size/1024/1024).toFixed(2)+' MB';document.getElementById('ai-result-wrap').style.display='none';}});
+
+renderBooks(classics,'classic-grid');
+renderBooks(islamics,'islamic-grid');
+renderHistory();
+</script>
+</body>
+</html>
