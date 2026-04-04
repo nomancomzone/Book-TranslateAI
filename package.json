@@ -1,0 +1,36 @@
+{
+  "name": "boipoka-ebook-store",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite dev --port 3000",
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "@netlify/identity": "^1.0.0",
+    "@tailwindcss/vite": "^4.0.6",
+    "@tanstack/react-router": "^1.163.3",
+    "@tanstack/react-start": "^1.166.1",
+    "@tanstack/react-store": "^0.9.1",
+    "@tanstack/store": "^0.9.1",
+    "lucide-react": "^0.576.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.0.6",
+    "vite-tsconfig-paths": "^6.0.2"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^3.0.0",
+    "@netlify/vite-plugin-tanstack-start": "^1.2.14",
+    "@tailwindcss/vite": "^4.0.6",
+    "@types/node": "^22.10.2",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^5.0.4",
+    "rimraf": "^6.0.1",
+    "tailwindcss": "^4.0.6",
+    "typescript": "^5.7.2",
+    "vite": "^7.1.7"
+  }
+}
