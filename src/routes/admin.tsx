@@ -18,6 +18,8 @@ function AdminPage() {
   const [wishlists, setWishlists] = useState<any[]>([])
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [bookContent, setBookContent] = useState('')
 
   // Book form state
   const [editingBook, setEditingBook] = useState<any>(null)
