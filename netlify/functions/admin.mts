@@ -1,21 +1,11 @@
 import { getStore } from '@netlify/blobs';
-import { getUser } from '@netlify/identity';
 import type { Context } from '@netlify/functions';
 
-async function isAdmin(req: Request): Promise<boolean> {
-  const user = await getUser();
-  if (!user) return false;
-  const roles = (user as any).app_metadata?.roles || [];
-  return roles.includes('admin');
-}
-
 export default async (req: Request, context: Context) => {
-  // Check admin password header for simple auth
   const adminPassword = Netlify.env.get('ADMIN_PASSWORD') || 'admin123';
   const authHeader = req.headers.get('x-admin-password');
 
-  const isAdminUser = await isAdmin(req);
-  if (!isAdminUser && authHeader !== adminPassword) {
+  if (authHeader !== adminPassword) {
     return new Response('Unauthorized', { status: 401 });
   }
 
@@ -46,11 +36,18 @@ export default async (req: Request, context: Context) => {
     return Response.json({ success: true });
   }
 
-  if (action === 'upload-content') {
-    const { bookId, content } = await req.json();
-    const contentStore = getStore('book-content');
-    await contentStore.set(bookId, content);
-    return Response.json({ success: true });
+  // PDF upload
+  if (action === 'upload-pdf') {
+    const formData = await req.formData();
+    const bookId = formData.get('bookId') as string;
+    const file = formData.get('pdf') as File;
+    if (!bookId || !file) return new Response('Missing data', { status: 400 });
+    const pdfStore = getStore('pdfs');
+    const buffer = await file.arrayBuffer();
+    await pdfStore.set(bookId, buffer, {
+      metadata: { contentType: 'application/pdf', fileName: file.name }
+    });
+    return Response.json({ success: true, url: `/api/pdf?bookId=${bookId}` });
   }
 
   if (action === 'upload-cover') {
@@ -88,7 +85,6 @@ export default async (req: Request, context: Context) => {
 
   if (action === 'sales-report') {
     const salesStore = getStore('sales');
-    const period = url.searchParams.get('period') || 'daily';
     const { blobs } = await salesStore.list();
     const reports = [];
     for (const blob of blobs) {

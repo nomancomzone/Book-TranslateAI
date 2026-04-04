@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
-import { CATEGORIES, type Book } from '@/lib/types'
+import { CATEGORIES } from '@/lib/types'
 import { BookOpen, Users, DollarSign, BarChart3, Heart, MessageSquare, Plus, Edit, Trash2, Eye, EyeOff, Sparkles, LogIn, ShoppingBag } from 'lucide-react'
 
 export const Route = createFileRoute('/admin')({
@@ -19,9 +19,9 @@ function AdminPage() {
   const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [generating, setGenerating] = useState(false)
-  const [bookContent, setBookContent] = useState('')
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [coverFile, setCoverFile] = useState<File | null>(null)
 
-  // Book form state
   const [editingBook, setEditingBook] = useState<any>(null)
   const [bookForm, setBookForm] = useState({
     title: '', titleBn: '', author: '', authorBn: '', price: 0, originalPrice: 0,
@@ -31,22 +31,25 @@ function AdminPage() {
     readingTime: '', mood: 'informative' as const, moodBn: '',
     quotes: '', aboutAuthor: '', aboutAuthorBn: '', published: true,
   })
-const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault()
-  const res = await fetch('/api/admin?action=list-books', {
-    method: 'GET',
-    headers: { 'x-admin-password': password },
-  })
-  if (res.ok) {
-    setAdminPassword(password)
-    setAuthenticated(true)
-  } else {
-    alert('ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।')
+
+  const headers = { 'x-admin-password': adminPassword }
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const res = await fetch('/api/admin?action=list-books', {
+      method: 'GET',
+      headers: { 'x-admin-password': password },
+    })
+    if (res.ok) {
+      setAdminPassword(password)
+      setAuthenticated(true)
+    } else {
+      alert('ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।')
+    }
   }
-}
 
   const fetchData = async (action: string) => {
-    const res = await fetch(`/api/admin?action=${action}`, { headers })
+    const res = await fetch(`/api/admin?action=${action}`, { headers: { 'x-admin-password': adminPassword } })
     if (res.status === 401) { setAuthenticated(false); return [] }
     return res.json()
   }
@@ -80,28 +83,52 @@ const handleLogin = async (e: React.FormEvent) => {
 
     const action = editingBook ? 'update-book' : 'create-book'
     const res = await fetch(`/api/admin?action=${action}`, {
-      method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     })
+
     if (res.ok) {
       const book = await res.json()
-      if (bookContent) {
-        await fetch(`/api/admin?action=upload-content`, {
-          method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ bookId: book.id, content: bookContent }),
+
+      // PDF upload
+      if (pdfFile) {
+        const formData = new FormData()
+        formData.append('bookId', book.id)
+        formData.append('pdf', pdfFile)
+        await fetch(`/api/admin?action=upload-pdf`, {
+          method: 'POST',
+          headers: { 'x-admin-password': adminPassword },
+          body: formData,
         })
       }
+
+      // Cover upload
+      if (coverFile) {
+        const formData = new FormData()
+        formData.append('bookId', book.id)
+        formData.append('cover', coverFile)
+        await fetch(`/api/admin?action=upload-cover`, {
+          method: 'POST',
+          headers: { 'x-admin-password': adminPassword },
+          body: formData,
+        })
+      }
+
       setBooks(await fetchData('list-books'))
       setEditingBook(null)
       resetForm()
-      alert('বই সেভ হয়েছে!')
+      alert('✅ বই সেভ হয়েছে!')
+    } else {
+      alert('❌ বই সেভ হয়নি! আবার চেষ্টা করুন।')
     }
   }
 
   const deleteBook = async (bookId: string) => {
     if (!confirm('এই বই মুছে ফেলতে চান?')) return
     await fetch(`/api/admin?action=delete-book`, {
-      method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' },
       body: JSON.stringify({ bookId }),
     })
     setBooks(books.filter(b => b.id !== bookId))
@@ -109,7 +136,8 @@ const handleLogin = async (e: React.FormEvent) => {
 
   const togglePublish = async (book: any) => {
     await fetch(`/api/admin?action=update-book`, {
-      method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
+      method: 'POST',
+      headers: { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...book, published: !book.published }),
     })
     setBooks(await fetchData('list-books'))
@@ -120,8 +148,9 @@ const handleLogin = async (e: React.FormEvent) => {
     setGenerating(true)
     try {
       const res = await fetch('/api/ai-generate', {
-        method: 'POST', headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: bookForm.title, author: bookForm.author, content: bookContent }),
+        method: 'POST',
+        headers: { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: bookForm.title, author: bookForm.author }),
       })
       if (res.ok) {
         const data = await res.json()
@@ -143,9 +172,7 @@ const handleLogin = async (e: React.FormEvent) => {
           categoryBn: data.categoryBn || prev.categoryBn,
           quotes: JSON.stringify(data.quotes || [], null, 2),
         }))
-        alert('AI দিয়ে তথ্য তৈরি হয়েছে!')
-      } else {
-        alert('AI generation failed')
+        alert('✅ AI দিয়ে তথ্য তৈরি হয়েছে!')
       }
     } catch { alert('Error') } finally { setGenerating(false) }
   }
@@ -159,7 +186,8 @@ const handleLogin = async (e: React.FormEvent) => {
       readingTime: '', mood: 'informative', moodBn: '', quotes: '',
       aboutAuthor: '', aboutAuthorBn: '', published: true,
     })
-    setBookContent('')
+    setPdfFile(null)
+    setCoverFile(null)
     setEditingBook(null)
   }
 
@@ -233,14 +261,12 @@ const handleLogin = async (e: React.FormEvent) => {
 
   return (
     <div className="min-h-screen bg-gray-100">
-      {/* Admin Header */}
       <div className="bg-[#1A1A2E] text-white px-4 py-3 flex items-center justify-between">
         <h1 className="font-bold bengali-text">📚 TranslatedBook অ্যাডমিন</h1>
         <button onClick={() => setAuthenticated(false)} className="text-sm text-gray-400 hover:text-white">লগআউট</button>
       </div>
 
       <div className="flex">
-        {/* Sidebar */}
         <aside className="w-56 bg-white min-h-screen border-r hidden md:block">
           <nav className="p-2 space-y-1">
             {tabs.map(tab => (
@@ -261,21 +287,16 @@ const handleLogin = async (e: React.FormEvent) => {
           </div>
         </aside>
 
-        {/* Mobile tab bar */}
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t z-50 flex overflow-x-auto">
           {tabs.slice(0, 5).map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex flex-col items-center py-2 text-xs ${activeTab === tab.id ? 'text-[#1877F2]' : 'text-gray-500'}`}
-            >
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`flex-1 flex flex-col items-center py-2 text-xs ${activeTab === tab.id ? 'text-[#1877F2]' : 'text-gray-500'}`}>
               <tab.icon className="w-4 h-4 mb-1" />
               <span className="bengali-text truncate">{tab.label}</span>
             </button>
           ))}
         </div>
 
-        {/* Content */}
         <main className="flex-1 p-4 md:p-6 pb-20 md:pb-6">
           {loading ? (
             <div className="flex items-center justify-center py-20">
@@ -283,48 +304,25 @@ const handleLogin = async (e: React.FormEvent) => {
             </div>
           ) : (
             <>
-              {/* Dashboard */}
               {activeTab === 'dashboard' && (
                 <div>
                   <h2 className="text-xl font-bold mb-6 bengali-text">ড্যাশবোর্ড</h2>
                   <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-                    <div className="bg-white p-4 rounded-xl border">
-                      <BookOpen className="w-8 h-8 text-[#1877F2] mb-2" />
-                      <p className="text-2xl font-bold">{books.length}</p>
-                      <p className="text-sm text-gray-500 bengali-text">মোট বই</p>
-                    </div>
-                    <div className="bg-white p-4 rounded-xl border">
-                      <Users className="w-8 h-8 text-green-500 mb-2" />
-                      <p className="text-2xl font-bold">{users.length}</p>
-                      <p className="text-sm text-gray-500 bengali-text">মোট ব্যবহারকারী</p>
-                    </div>
-                    <div className="bg-white p-4 rounded-xl border">
-                      <ShoppingBag className="w-8 h-8 text-orange-500 mb-2" />
-                      <p className="text-2xl font-bold">{totalSales}</p>
-                      <p className="text-sm text-gray-500 bengali-text">মোট বিক্রয়</p>
-                    </div>
-                    <div className="bg-white p-4 rounded-xl border">
-                      <DollarSign className="w-8 h-8 text-purple-500 mb-2" />
-                      <p className="text-2xl font-bold">৳{totalRevenue}</p>
-                      <p className="text-sm text-gray-500 bengali-text">মোট আয়</p>
-                    </div>
+                    <div className="bg-white p-4 rounded-xl border"><BookOpen className="w-8 h-8 text-[#1877F2] mb-2" /><p className="text-2xl font-bold">{books.length}</p><p className="text-sm text-gray-500 bengali-text">মোট বই</p></div>
+                    <div className="bg-white p-4 rounded-xl border"><Users className="w-8 h-8 text-green-500 mb-2" /><p className="text-2xl font-bold">{users.length}</p><p className="text-sm text-gray-500 bengali-text">মোট ব্যবহারকারী</p></div>
+                    <div className="bg-white p-4 rounded-xl border"><ShoppingBag className="w-8 h-8 text-orange-500 mb-2" /><p className="text-2xl font-bold">{totalSales}</p><p className="text-sm text-gray-500 bengali-text">মোট বিক্রয়</p></div>
+                    <div className="bg-white p-4 rounded-xl border"><DollarSign className="w-8 h-8 text-purple-500 mb-2" /><p className="text-2xl font-bold">৳{totalRevenue}</p><p className="text-sm text-gray-500 bengali-text">মোট আয়</p></div>
                   </div>
-
-                  {/* Sales Chart (simplified) */}
                   <div className="bg-white rounded-xl border p-6">
                     <h3 className="font-bold mb-4 bengali-text">📊 দৈনিক বিক্রয়</h3>
-                    {salesData.length === 0 ? (
-                      <p className="text-gray-500 text-center py-8 bengali-text">এখনো কোনো বিক্রয় তথ্য নেই</p>
-                    ) : (
+                    {salesData.length === 0 ? <p className="text-gray-500 text-center py-8 bengali-text">এখনো কোনো বিক্রয় তথ্য নেই</p> : (
                       <div className="space-y-2">
                         {salesData.slice(0, 14).map((day: any) => (
                           <div key={day.date} className="flex items-center gap-3">
                             <span className="text-sm w-24 text-gray-500">{day.date}</span>
                             <div className="flex-1 bg-gray-100 rounded-full h-6">
-                              <div
-                                className="bg-[#1877F2] h-6 rounded-full flex items-center justify-end pr-2"
-                                style={{ width: `${Math.min(100, (day.totalRevenue / (Math.max(...salesData.map((d: any) => d.totalRevenue || 1)))) * 100)}%`, minWidth: '40px' }}
-                              >
+                              <div className="bg-[#1877F2] h-6 rounded-full flex items-center justify-end pr-2"
+                                style={{ width: `${Math.min(100, (day.totalRevenue / (Math.max(...salesData.map((d: any) => d.totalRevenue || 1)))) * 100)}%`, minWidth: '40px' }}>
                                 <span className="text-xs text-white font-medium">৳{day.totalRevenue}</span>
                               </div>
                             </div>
@@ -337,7 +335,6 @@ const handleLogin = async (e: React.FormEvent) => {
                 </div>
               )}
 
-              {/* Books Management */}
               {activeTab === 'books' && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
@@ -392,7 +389,6 @@ const handleLogin = async (e: React.FormEvent) => {
                 </div>
               )}
 
-              {/* Add/Edit Book */}
               {activeTab === 'add-book' && (
                 <div>
                   <div className="flex items-center justify-between mb-6">
@@ -403,30 +399,12 @@ const handleLogin = async (e: React.FormEvent) => {
                   </div>
                   <div className="bg-white rounded-xl border p-6 space-y-6">
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Title (English)</label>
-                        <input type="text" value={bookForm.title} onChange={e => setBookForm({...bookForm, title: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 bengali-text">শিরোনাম (বাংলা)</label>
-                        <input type="text" value={bookForm.titleBn} onChange={e => setBookForm({...bookForm, titleBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Author (English)</label>
-                        <input type="text" value={bookForm.author} onChange={e => setBookForm({...bookForm, author: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 bengali-text">লেখক (বাংলা)</label>
-                        <input type="text" value={bookForm.authorBn} onChange={e => setBookForm({...bookForm, authorBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 bengali-text">মূল্য (৳)</label>
-                        <input type="number" value={bookForm.price} onChange={e => setBookForm({...bookForm, price: Number(e.target.value)})} className="w-full border rounded-lg px-3 py-2" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 bengali-text">আসল মূল্য (৳)</label>
-                        <input type="number" value={bookForm.originalPrice} onChange={e => setBookForm({...bookForm, originalPrice: Number(e.target.value)})} className="w-full border rounded-lg px-3 py-2" />
-                      </div>
+                      <div><label className="block text-sm font-medium mb-1">Title (English)</label><input type="text" value={bookForm.title} onChange={e => setBookForm({...bookForm, title: e.target.value})} className="w-full border rounded-lg px-3 py-2" /></div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">শিরোনাম (বাংলা)</label><input type="text" value={bookForm.titleBn} onChange={e => setBookForm({...bookForm, titleBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" /></div>
+                      <div><label className="block text-sm font-medium mb-1">Author (English)</label><input type="text" value={bookForm.author} onChange={e => setBookForm({...bookForm, author: e.target.value})} className="w-full border rounded-lg px-3 py-2" /></div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">লেখক (বাংলা)</label><input type="text" value={bookForm.authorBn} onChange={e => setBookForm({...bookForm, authorBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" /></div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">মূল্য (৳)</label><input type="number" value={bookForm.price} onChange={e => setBookForm({...bookForm, price: Number(e.target.value)})} className="w-full border rounded-lg px-3 py-2" /></div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">আসল মূল্য (৳)</label><input type="number" value={bookForm.originalPrice} onChange={e => setBookForm({...bookForm, originalPrice: Number(e.target.value)})} className="w-full border rounded-lg px-3 py-2" /></div>
                       <div>
                         <label className="block text-sm font-medium mb-1 bengali-text">ক্যাটাগরি</label>
                         <select value={bookForm.category} onChange={e => { const cat = CATEGORIES.find(c => c.id === e.target.value); setBookForm({...bookForm, category: e.target.value, categoryBn: cat?.nameBn || ''}); }} className="w-full border rounded-lg px-3 py-2">
@@ -444,82 +422,72 @@ const handleLogin = async (e: React.FormEvent) => {
                           <option value="romantic">Romantic</option>
                         </select>
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 bengali-text">মুড (বাংলা)</label>
-                        <input type="text" value={bookForm.moodBn} onChange={e => setBookForm({...bookForm, moodBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 bengali-text">পড়ার সময়</label>
-                        <input type="text" value={bookForm.readingTime} onChange={e => setBookForm({...bookForm, readingTime: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" placeholder="৫ ঘণ্টা" />
-                      </div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">মুড (বাংলা)</label><input type="text" value={bookForm.moodBn} onChange={e => setBookForm({...bookForm, moodBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" /></div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">পড়ার সময়</label><input type="text" value={bookForm.readingTime} onChange={e => setBookForm({...bookForm, readingTime: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" placeholder="৫ ঘণ্টা" /></div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Tags (comma separated)</label>
-                      <input type="text" value={bookForm.tags} onChange={e => setBookForm({...bookForm, tags: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1 bengali-text">ট্যাগ (কমা দিয়ে আলাদা)</label>
-                      <input type="text" value={bookForm.tagsBn} onChange={e => setBookForm({...bookForm, tagsBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" />
-                    </div>
+                    <div><label className="block text-sm font-medium mb-1">Tags (comma separated)</label><input type="text" value={bookForm.tags} onChange={e => setBookForm({...bookForm, tags: e.target.value})} className="w-full border rounded-lg px-3 py-2" /></div>
+                    <div><label className="block text-sm font-medium mb-1 bengali-text">ট্যাগ (কমা দিয়ে আলাদা)</label><input type="text" value={bookForm.tagsBn} onChange={e => setBookForm({...bookForm, tagsBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" /></div>
+                    <div><label className="block text-sm font-medium mb-1 bengali-text">মূল বার্তা (বাংলা)</label><input type="text" value={bookForm.mainMessageBn} onChange={e => setBookForm({...bookForm, mainMessageBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" /></div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1 bengali-text">মূল বার্তা (বাংলা)</label>
-                      <input type="text" value={bookForm.mainMessageBn} onChange={e => setBookForm({...bookForm, mainMessageBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" />
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div><label className="block text-sm font-medium mb-1">Summary (English)</label><textarea value={bookForm.summary} onChange={e => setBookForm({...bookForm, summary: e.target.value})} className="w-full border rounded-lg px-3 py-2" rows={4} /></div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">সারসংক্ষেপ (বাংলা)</label><textarea value={bookForm.summaryBn} onChange={e => setBookForm({...bookForm, summaryBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" rows={4} /></div>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Summary (English)</label>
-                        <textarea value={bookForm.summary} onChange={e => setBookForm({...bookForm, summary: e.target.value})} className="w-full border rounded-lg px-3 py-2" rows={4} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 bengali-text">সারসংক্ষেপ (বাংলা)</label>
-                        <textarea value={bookForm.summaryBn} onChange={e => setBookForm({...bookForm, summaryBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" rows={4} />
-                      </div>
+                      <div><label className="block text-sm font-medium mb-1">Key Points (one per line)</label><textarea value={bookForm.keyPoints} onChange={e => setBookForm({...bookForm, keyPoints: e.target.value})} className="w-full border rounded-lg px-3 py-2" rows={4} /></div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">মূল বিষয় (প্রতি লাইনে একটি)</label><textarea value={bookForm.keyPointsBn} onChange={e => setBookForm({...bookForm, keyPointsBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" rows={4} /></div>
                     </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Key Points (one per line)</label>
-                        <textarea value={bookForm.keyPoints} onChange={e => setBookForm({...bookForm, keyPoints: e.target.value})} className="w-full border rounded-lg px-3 py-2" rows={4} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 bengali-text">মূল বিষয় (প্রতি লাইনে একটি)</label>
-                        <textarea value={bookForm.keyPointsBn} onChange={e => setBookForm({...bookForm, keyPointsBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" rows={4} />
-                      </div>
+                      <div><label className="block text-sm font-medium mb-1">Target Audience</label><input type="text" value={bookForm.targetAudience} onChange={e => setBookForm({...bookForm, targetAudience: e.target.value})} className="w-full border rounded-lg px-3 py-2" /></div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">লক্ষ্য পাঠক (বাংলা)</label><input type="text" value={bookForm.targetAudienceBn} onChange={e => setBookForm({...bookForm, targetAudienceBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" /></div>
                     </div>
+
+                    <div><label className="block text-sm font-medium mb-1">Quotes (JSON array)</label><textarea value={bookForm.quotes} onChange={e => setBookForm({...bookForm, quotes: e.target.value})} className="w-full border rounded-lg px-3 py-2 font-mono text-sm" rows={4} placeholder='[{"text": "English", "textBn": "বাংলা"}]' /></div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">Target Audience</label>
-                        <input type="text" value={bookForm.targetAudience} onChange={e => setBookForm({...bookForm, targetAudience: e.target.value})} className="w-full border rounded-lg px-3 py-2" />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 bengali-text">লক্ষ্য পাঠক (বাংলা)</label>
-                        <input type="text" value={bookForm.targetAudienceBn} onChange={e => setBookForm({...bookForm, targetAudienceBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" />
-                      </div>
+                      <div><label className="block text-sm font-medium mb-1">About Author</label><textarea value={bookForm.aboutAuthor} onChange={e => setBookForm({...bookForm, aboutAuthor: e.target.value})} className="w-full border rounded-lg px-3 py-2" rows={3} /></div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">লেখক সম্পর্কে (বাংলা)</label><textarea value={bookForm.aboutAuthorBn} onChange={e => setBookForm({...bookForm, aboutAuthorBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" rows={3} /></div>
                     </div>
 
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Quotes (JSON array)</label>
-                      <textarea value={bookForm.quotes} onChange={e => setBookForm({...bookForm, quotes: e.target.value})} className="w-full border rounded-lg px-3 py-2 font-mono text-sm" rows={4} placeholder='[{"text": "English", "textBn": "বাংলা"}]' />
+                    {/* PDF Upload */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6">
+                      <label className="block text-sm font-medium mb-2 bengali-text">📄 PDF ফাইল আপলোড করুন</label>
+                      <input
+                        type="file"
+                        accept=".pdf"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) setPdfFile(file)
+                        }}
+                        className="w-full border rounded-lg px-3 py-2"
+                      />
+                      {pdfFile && (
+                        <p className="text-sm text-green-600 mt-2 bengali-text">
+                          ✅ {pdfFile.name} ({Math.round(pdfFile.size / 1024 / 1024 * 10) / 10} MB)
+                        </p>
+                      )}
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium mb-1">About Author</label>
-                        <textarea value={bookForm.aboutAuthor} onChange={e => setBookForm({...bookForm, aboutAuthor: e.target.value})} className="w-full border rounded-lg px-3 py-2" rows={3} />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium mb-1 bengali-text">লেখক সম্পর্কে (বাংলা)</label>
-                        <textarea value={bookForm.aboutAuthorBn} onChange={e => setBookForm({...bookForm, aboutAuthorBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" rows={3} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-1 bengali-text">📄 বইয়ের কন্টেন্ট (পুরো টেক্সট)</label>
-                      <textarea value={bookContent} onChange={e => setBookContent(e.target.value)} className="w-full border rounded-lg px-3 py-2 bengali-text" rows={8} placeholder="এখানে বইয়ের সম্পূর্ণ কন্টেন্ট পেস্ট করুন..." />
+                    {/* Cover Image Upload */}
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6">
+                      <label className="block text-sm font-medium mb-2 bengali-text">🖼️ কভার ইমেজ আপলোড করুন</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0]
+                          if (file) setCoverFile(file)
+                        }}
+                        className="w-full border rounded-lg px-3 py-2"
+                      />
+                      {coverFile && (
+                        <div className="mt-2">
+                          <img src={URL.createObjectURL(coverFile)} alt="Cover preview" className="h-32 object-cover rounded-lg" />
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -539,20 +507,12 @@ const handleLogin = async (e: React.FormEvent) => {
                 </div>
               )}
 
-              {/* Users */}
               {activeTab === 'users' && (
                 <div>
                   <h2 className="text-xl font-bold mb-6 bengali-text">👥 ব্যবহারকারী তালিকা</h2>
                   <div className="bg-white rounded-xl border overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b">
-                        <tr>
-                          <th className="px-4 py-3 text-left bengali-text">নাম</th>
-                          <th className="px-4 py-3 text-left bengali-text">ইমেইল</th>
-                          <th className="px-4 py-3 text-left bengali-text">কেনা বই</th>
-                          <th className="px-4 py-3 text-left bengali-text">যোগদান</th>
-                        </tr>
-                      </thead>
+                      <thead className="bg-gray-50 border-b"><tr><th className="px-4 py-3 text-left bengali-text">নাম</th><th className="px-4 py-3 text-left bengali-text">ইমেইল</th><th className="px-4 py-3 text-left bengali-text">কেনা বই</th><th className="px-4 py-3 text-left bengali-text">যোগদান</th></tr></thead>
                       <tbody className="divide-y">
                         {users.map((u: any) => (
                           <tr key={u.id} className="hover:bg-gray-50">
@@ -569,32 +529,19 @@ const handleLogin = async (e: React.FormEvent) => {
                 </div>
               )}
 
-              {/* Orders */}
               {activeTab === 'orders' && (
                 <div>
                   <h2 className="text-xl font-bold mb-6 bengali-text">🛒 অর্ডার তালিকা</h2>
                   <div className="bg-white rounded-xl border overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b">
-                        <tr>
-                          <th className="px-4 py-3 text-left">Order ID</th>
-                          <th className="px-4 py-3 text-left bengali-text">ইমেইল</th>
-                          <th className="px-4 py-3 text-left bengali-text">পরিমাণ</th>
-                          <th className="px-4 py-3 text-left bengali-text">স্ট্যাটাস</th>
-                          <th className="px-4 py-3 text-left bengali-text">তারিখ</th>
-                        </tr>
-                      </thead>
+                      <thead className="bg-gray-50 border-b"><tr><th className="px-4 py-3 text-left">Order ID</th><th className="px-4 py-3 text-left bengali-text">ইমেইল</th><th className="px-4 py-3 text-left bengali-text">পরিমাণ</th><th className="px-4 py-3 text-left bengali-text">স্ট্যাটাস</th><th className="px-4 py-3 text-left bengali-text">তারিখ</th></tr></thead>
                       <tbody className="divide-y">
                         {orders.map((order: any) => (
                           <tr key={order.id} className="hover:bg-gray-50">
                             <td className="px-4 py-3 font-mono text-xs">{order.id}</td>
                             <td className="px-4 py-3">{order.userEmail}</td>
                             <td className="px-4 py-3">৳{order.totalAmount}</td>
-                            <td className="px-4 py-3">
-                              <span className={`text-xs px-2 py-1 rounded-full ${order.paymentStatus === 'completed' ? 'bg-green-100 text-green-700' : order.paymentStatus === 'failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
-                                {order.paymentStatus}
-                              </span>
-                            </td>
+                            <td className="px-4 py-3"><span className={`text-xs px-2 py-1 rounded-full ${order.paymentStatus === 'completed' ? 'bg-green-100 text-green-700' : order.paymentStatus === 'failed' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>{order.paymentStatus}</span></td>
                             <td className="px-4 py-3 text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</td>
                           </tr>
                         ))}
@@ -605,41 +552,19 @@ const handleLogin = async (e: React.FormEvent) => {
                 </div>
               )}
 
-              {/* Sales Report */}
               {activeTab === 'sales' && (
                 <div>
                   <h2 className="text-xl font-bold mb-6 bengali-text">💰 বিক্রয় রিপোর্ট</h2>
                   <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-                    <div className="bg-white p-4 rounded-xl border">
-                      <p className="text-sm text-gray-500 bengali-text">মোট আয়</p>
-                      <p className="text-2xl font-bold text-green-600">৳{totalRevenue}</p>
-                    </div>
-                    <div className="bg-white p-4 rounded-xl border">
-                      <p className="text-sm text-gray-500 bengali-text">মোট বিক্রয়</p>
-                      <p className="text-2xl font-bold text-[#1877F2]">{totalSales}</p>
-                    </div>
-                    <div className="bg-white p-4 rounded-xl border">
-                      <p className="text-sm text-gray-500 bengali-text">গড় অর্ডার মূল্য</p>
-                      <p className="text-2xl font-bold text-purple-600">৳{totalSales > 0 ? Math.round(totalRevenue / totalSales) : 0}</p>
-                    </div>
+                    <div className="bg-white p-4 rounded-xl border"><p className="text-sm text-gray-500 bengali-text">মোট আয়</p><p className="text-2xl font-bold text-green-600">৳{totalRevenue}</p></div>
+                    <div className="bg-white p-4 rounded-xl border"><p className="text-sm text-gray-500 bengali-text">মোট বিক্রয়</p><p className="text-2xl font-bold text-[#1877F2]">{totalSales}</p></div>
+                    <div className="bg-white p-4 rounded-xl border"><p className="text-sm text-gray-500 bengali-text">গড় অর্ডার মূল্য</p><p className="text-2xl font-bold text-purple-600">৳{totalSales > 0 ? Math.round(totalRevenue / totalSales) : 0}</p></div>
                   </div>
                   <div className="bg-white rounded-xl border overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b">
-                        <tr>
-                          <th className="px-4 py-3 text-left bengali-text">তারিখ</th>
-                          <th className="px-4 py-3 text-left bengali-text">বিক্রয় সংখ্যা</th>
-                          <th className="px-4 py-3 text-left bengali-text">আয়</th>
-                        </tr>
-                      </thead>
+                      <thead className="bg-gray-50 border-b"><tr><th className="px-4 py-3 text-left bengali-text">তারিখ</th><th className="px-4 py-3 text-left bengali-text">বিক্রয় সংখ্যা</th><th className="px-4 py-3 text-left bengali-text">আয়</th></tr></thead>
                       <tbody className="divide-y">
-                        {salesData.map((day: any) => (
-                          <tr key={day.date} className="hover:bg-gray-50">
-                            <td className="px-4 py-3">{day.date}</td>
-                            <td className="px-4 py-3">{day.totalSales}</td>
-                            <td className="px-4 py-3 font-bold">৳{day.totalRevenue}</td>
-                          </tr>
-                        ))}
+                        {salesData.map((day: any) => (<tr key={day.date} className="hover:bg-gray-50"><td className="px-4 py-3">{day.date}</td><td className="px-4 py-3">{day.totalSales}</td><td className="px-4 py-3 font-bold">৳{day.totalRevenue}</td></tr>))}
                       </tbody>
                     </table>
                     {salesData.length === 0 && <p className="text-center py-8 text-gray-500 bengali-text">কোনো বিক্রয় তথ্য নেই</p>}
@@ -647,21 +572,12 @@ const handleLogin = async (e: React.FormEvent) => {
                 </div>
               )}
 
-              {/* Wishlists */}
               {activeTab === 'wishlists' && (
                 <div>
                   <h2 className="text-xl font-bold mb-6 bengali-text">❤️ উইশলিস্ট অনুরোধ</h2>
                   <div className="bg-white rounded-xl border overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b">
-                        <tr>
-                          <th className="px-4 py-3 text-left bengali-text">বই</th>
-                          <th className="px-4 py-3 text-left bengali-text">লেখক</th>
-                          <th className="px-4 py-3 text-left bengali-text">অনুরোধকারী</th>
-                          <th className="px-4 py-3 text-left bengali-text">নোট</th>
-                          <th className="px-4 py-3 text-left bengali-text">তারিখ</th>
-                        </tr>
-                      </thead>
+                      <thead className="bg-gray-50 border-b"><tr><th className="px-4 py-3 text-left bengali-text">বই</th><th className="px-4 py-3 text-left bengali-text">লেখক</th><th className="px-4 py-3 text-left bengali-text">অনুরোধকারী</th><th className="px-4 py-3 text-left bengali-text">নোট</th><th className="px-4 py-3 text-left bengali-text">তারিখ</th></tr></thead>
                       <tbody className="divide-y">
                         {wishlists.map((w: any, i: number) => (
                           <tr key={i} className="hover:bg-gray-50">
@@ -679,13 +595,10 @@ const handleLogin = async (e: React.FormEvent) => {
                 </div>
               )}
 
-              {/* Reviews placeholder */}
               {activeTab === 'reviews' && (
                 <div>
                   <h2 className="text-xl font-bold mb-6 bengali-text">💬 রিভিউ ম্যানেজমেন্ট</h2>
-                  <p className="text-gray-500 bengali-text bg-white p-8 rounded-xl border text-center">
-                    রিভিউ ম্যানেজ করতে প্রতিটি বইয়ের রিভিউ সেকশনে যান
-                  </p>
+                  <p className="text-gray-500 bengali-text bg-white p-8 rounded-xl border text-center">রিভিউ ম্যানেজ করতে প্রতিটি বইয়ের রিভিউ সেকশনে যান</p>
                 </div>
               )}
             </>
