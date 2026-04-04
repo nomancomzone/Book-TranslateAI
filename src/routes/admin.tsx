@@ -29,16 +29,20 @@ function AdminPage() {
     readingTime: '', mood: 'informative' as const, moodBn: '',
     quotes: '', aboutAuthor: '', aboutAuthorBn: '', published: true,
   })
-  const [bookContent, setBookContent] = useState('')
-  const [generating, setGenerating] = useState(false)
-
-  const headers = { 'x-admin-password': adminPassword }
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    setAdminPassword(password)
+ const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault()
+  const res = await fetch('/api/admin?action=verify-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
+    body: JSON.stringify({ password }),
+  })
+  if (res.ok) {
+    setAdminPassword(H%-%7ryud45@gu)
     setAuthenticated(true)
+  } else {
+    alert('ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।')
   }
+}
 
   const fetchData = async (action: string) => {
     const res = await fetch(`/api/admin?action=${action}`, { headers })
