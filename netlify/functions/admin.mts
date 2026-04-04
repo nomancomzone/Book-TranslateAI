@@ -1,0 +1,151 @@
+import { getStore } from '@netlify/blobs';
+import { getUser } from '@netlify/identity';
+import type { Context } from '@netlify/functions';
+
+async function isAdmin(req: Request): Promise<boolean> {
+  const user = await getUser();
+  if (!user) return false;
+  const roles = (user as any).app_metadata?.roles || [];
+  return roles.includes('admin');
+}
+
+export default async (req: Request, context: Context) => {
+  // Check admin password header for simple auth
+  const adminPassword = Netlify.env.get('ADMIN_PASSWORD') || 'admin123';
+  const authHeader = req.headers.get('x-admin-password');
+
+  const isAdminUser = await isAdmin(req);
+  if (!isAdminUser && authHeader !== adminPassword) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const url = new URL(req.url);
+  const action = url.searchParams.get('action');
+
+  // Book management
+  if (action === 'create-book' || action === 'update-book') {
+    const bookData = await req.json();
+    const bookStore = getStore('books');
+    const id = bookData.id || `book-${Date.now()}`;
+    const book = { ...bookData, id, updatedAt: new Date().toISOString() };
+    if (action === 'create-book') {
+      book.createdAt = new Date().toISOString();
+      book.totalReaders = 0;
+      book.rating = 0;
+      book.ratingBreakdown = { star5: 0, star4: 0, star3: 0, star2: 0, star1: 0 };
+      book.reviews = [];
+    }
+    await bookStore.setJSON(id, book);
+    return Response.json(book);
+  }
+
+  if (action === 'delete-book') {
+    const { bookId } = await req.json();
+    const bookStore = getStore('books');
+    await bookStore.delete(bookId);
+    return Response.json({ success: true });
+  }
+
+  if (action === 'upload-content') {
+    const { bookId, content } = await req.json();
+    const contentStore = getStore('book-content');
+    await contentStore.set(bookId, content);
+    return Response.json({ success: true });
+  }
+
+  if (action === 'upload-cover') {
+    const formData = await req.formData();
+    const bookId = formData.get('bookId') as string;
+    const file = formData.get('cover') as File;
+    if (!bookId || !file) return new Response('Missing data', { status: 400 });
+    const coverStore = getStore('covers');
+    const buffer = await file.arrayBuffer();
+    await coverStore.set(bookId, buffer);
+    return Response.json({ url: `/api/cover?bookId=${bookId}` });
+  }
+
+  if (action === 'list-books') {
+    const bookStore = getStore('books');
+    const { blobs } = await bookStore.list();
+    const books = [];
+    for (const blob of blobs) {
+      const book = await bookStore.get(blob.key, { type: 'json' });
+      if (book) books.push(book);
+    }
+    return Response.json(books);
+  }
+
+  if (action === 'list-users') {
+    const userStore = getStore('users');
+    const { blobs } = await userStore.list();
+    const users = [];
+    for (const blob of blobs) {
+      const user = await userStore.get(blob.key, { type: 'json' });
+      if (user) users.push(user);
+    }
+    return Response.json(users);
+  }
+
+  if (action === 'sales-report') {
+    const salesStore = getStore('sales');
+    const period = url.searchParams.get('period') || 'daily';
+    const { blobs } = await salesStore.list();
+    const reports = [];
+    for (const blob of blobs) {
+      const report = await salesStore.get(blob.key, { type: 'json' });
+      if (report) reports.push(report);
+    }
+    reports.sort((a: any, b: any) => b.date.localeCompare(a.date));
+    return Response.json(reports);
+  }
+
+  if (action === 'list-wishlists') {
+    const userStore = getStore('users');
+    const { blobs } = await userStore.list();
+    const allWishlists: any[] = [];
+    for (const blob of blobs) {
+      const user = await userStore.get(blob.key, { type: 'json' }) as any;
+      if (user?.wishlist?.length) {
+        for (const item of user.wishlist) {
+          allWishlists.push({ ...item, userEmail: user.email, userName: user.name });
+        }
+      }
+    }
+    return Response.json(allWishlists);
+  }
+
+  if (action === 'manage-review') {
+    const { bookId, reviewId, approved, deleteReview } = await req.json();
+    const reviewStore = getStore('reviews');
+    const reviews = await reviewStore.get(bookId, { type: 'json' }) as any[] || [];
+    if (deleteReview) {
+      const filtered = reviews.filter((r: any) => r.id !== reviewId);
+      await reviewStore.setJSON(bookId, filtered);
+      return Response.json(filtered);
+    }
+    const review = reviews.find((r: any) => r.id === reviewId);
+    if (review) {
+      review.approved = approved;
+      await reviewStore.setJSON(bookId, reviews);
+    }
+    return Response.json(reviews);
+  }
+
+  if (action === 'list-orders') {
+    const orderStore = getStore('orders');
+    const { blobs } = await orderStore.list();
+    const orders = [];
+    for (const blob of blobs) {
+      const order = await orderStore.get(blob.key, { type: 'json' });
+      if (order) orders.push(order);
+    }
+    orders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return Response.json(orders);
+  }
+
+  return new Response('Unknown action', { status: 400 });
+};
+
+export const config = {
+  path: '/api/admin',
+};

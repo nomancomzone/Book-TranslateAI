@@ -1,0 +1,64 @@
+@import "tailwindcss" source("../");
+
+@theme {
+  --color-primary: #1877F2;
+  --color-primary-dark: #1565C0;
+  --color-primary-light: #42A5F5;
+  --color-secondary: #FF6B35;
+  --color-accent: #00C853;
+  --color-dark: #1A1A2E;
+  --color-surface: #F8FAFC;
+  --color-surface-dark: #1E293B;
+  --color-muted: #64748B;
+  --font-sans: "Inter", "Noto Sans Bengali", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+}
+
+body {
+  @apply m-0 font-sans;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.bengali-text {
+  font-family: "Noto Sans Bengali", "Kalpurush", sans-serif;
+  line-height: 2;
+}
+
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.no-print {
+  @media print {
+    display: none !important;
+  }
+}
+
+@media print {
+  body { display: none !important; }
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
