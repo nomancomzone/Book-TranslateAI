@@ -29,12 +29,11 @@ function AdminPage() {
     readingTime: '', mood: 'informative' as const, moodBn: '',
     quotes: '', aboutAuthor: '', aboutAuthorBn: '', published: true,
   })
- const handleLogin = async (e: React.FormEvent) => {
+const handleLogin = async (e: React.FormEvent) => {
   e.preventDefault()
-  const res = await fetch('/api/admin?action=verify-password', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-password': password },
-    body: JSON.stringify({ password }),
+  const res = await fetch('/api/admin?action=list-books', {
+    method: 'GET',
+    headers: { 'x-admin-password': password },
   })
   if (res.ok) {
     setAdminPassword(password)
