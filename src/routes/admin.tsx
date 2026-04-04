@@ -37,7 +37,7 @@ function AdminPage() {
     body: JSON.stringify({ password }),
   })
   if (res.ok) {
-    setAdminPassword(H%-%7ryud45@gu)
+    setAdminPassword(password)
     setAuthenticated(true)
   } else {
     alert('ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।')
