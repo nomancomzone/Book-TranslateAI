@@ -16,7 +16,27 @@ export default async (req: Request, context: Context) => {
     const bookData = await req.json();
     const bookStore = getStore('books');
     const id = bookData.id || `book-${Date.now()}`;
-    const book = { ...bookData, id, updatedAt: new Date().toISOString() };
+
+    // Update হলে আগের data রাখো
+    let existing: any = {};
+    if (action === 'update-book' && id) {
+      existing = await bookStore.get(id, { type: 'json' }) as any || {};
+    }
+
+    const book = {
+      ...existing,
+      ...bookData,
+      id,
+      updatedAt: new Date().toISOString(),
+      // এগুলো existing থেকে রাখো যদি নতুন না আসে
+      coverImage: bookData.coverImage || existing.coverImage || '',
+      previewImages: bookData.previewImages || existing.previewImages || [],
+      totalReaders: existing.totalReaders || 0,
+      rating: existing.rating || 0,
+      ratingBreakdown: existing.ratingBreakdown || { star5: 0, star4: 0, star3: 0, star2: 0, star1: 0 },
+      reviews: existing.reviews || [],
+    };
+
     if (action === 'create-book') {
       book.createdAt = new Date().toISOString();
       book.totalReaders = 0;
@@ -24,6 +44,7 @@ export default async (req: Request, context: Context) => {
       book.ratingBreakdown = { star5: 0, star4: 0, star3: 0, star2: 0, star1: 0 };
       book.reviews = [];
     }
+
     await bookStore.setJSON(id, book);
     return Response.json(book);
   }
