@@ -21,6 +21,7 @@ function AdminPage() {
   const [generating, setGenerating] = useState(false)
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [previewFiles, setPreviewFiles] = useState<File[]>([])
 
   const [editingBook, setEditingBook] = useState<any>(null)
   const [bookForm, setBookForm] = useState({
@@ -115,6 +116,18 @@ function AdminPage() {
         })
       }
 
+      // Preview screenshots upload
+      if (previewFiles.length > 0) {
+        const formData = new FormData()
+        formData.append('bookId', book.id)
+        previewFiles.forEach(file => formData.append('previews', file))
+        await fetch(`/api/admin?action=upload-preview`, {
+          method: 'POST',
+          headers: { 'x-admin-password': adminPassword },
+          body: formData,
+        })
+      }
+
       setBooks(await fetchData('list-books'))
       setEditingBook(null)
       resetForm()
@@ -158,13 +171,18 @@ function AdminPage() {
           ...prev,
           titleBn: data.titleBn || prev.titleBn,
           authorBn: data.authorBn || prev.authorBn,
+          summary: data.summary || prev.summary,
           summaryBn: data.summaryBn || prev.summaryBn,
+          mainMessage: data.mainMessage || prev.mainMessage,
           mainMessageBn: data.mainMessageBn || prev.mainMessageBn,
+          keyPoints: (data.keyPoints || []).join('\n'),
           keyPointsBn: (data.keyPointsBn || []).join('\n'),
+          targetAudience: data.targetAudience || prev.targetAudience,
           targetAudienceBn: data.targetAudienceBn || prev.targetAudienceBn,
           readingTime: data.readingTime || prev.readingTime,
           mood: data.mood || prev.mood,
           moodBn: data.moodBn || prev.moodBn,
+          aboutAuthor: data.aboutAuthor || prev.aboutAuthor,
           aboutAuthorBn: data.aboutAuthorBn || prev.aboutAuthorBn,
           tags: (data.tags || []).join(', '),
           tagsBn: (data.tagsBn || []).join(', '),
@@ -188,6 +206,7 @@ function AdminPage() {
     })
     setPdfFile(null)
     setCoverFile(null)
+    setPreviewFiles([])
     setEditingBook(null)
   }
 
@@ -270,11 +289,8 @@ function AdminPage() {
         <aside className="w-56 bg-white min-h-screen border-r hidden md:block">
           <nav className="p-2 space-y-1">
             {tabs.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${activeTab === tab.id ? 'bg-[#1877F2] text-white' : 'hover:bg-gray-100'}`}
-              >
+              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                className={`w-full flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm text-left transition-colors ${activeTab === tab.id ? 'bg-[#1877F2] text-white' : 'hover:bg-gray-100'}`}>
                 <tab.icon className="w-4 h-4" />
                 <span className="bengali-text">{tab.label}</span>
               </button>
@@ -428,7 +444,11 @@ function AdminPage() {
 
                     <div><label className="block text-sm font-medium mb-1">Tags (comma separated)</label><input type="text" value={bookForm.tags} onChange={e => setBookForm({...bookForm, tags: e.target.value})} className="w-full border rounded-lg px-3 py-2" /></div>
                     <div><label className="block text-sm font-medium mb-1 bengali-text">ট্যাগ (কমা দিয়ে আলাদা)</label><input type="text" value={bookForm.tagsBn} onChange={e => setBookForm({...bookForm, tagsBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" /></div>
-                    <div><label className="block text-sm font-medium mb-1 bengali-text">মূল বার্তা (বাংলা)</label><input type="text" value={bookForm.mainMessageBn} onChange={e => setBookForm({...bookForm, mainMessageBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" /></div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div><label className="block text-sm font-medium mb-1">Main Message (English)</label><input type="text" value={bookForm.mainMessage} onChange={e => setBookForm({...bookForm, mainMessage: e.target.value})} className="w-full border rounded-lg px-3 py-2" /></div>
+                      <div><label className="block text-sm font-medium mb-1 bengali-text">মূল বার্তা (বাংলা)</label><input type="text" value={bookForm.mainMessageBn} onChange={e => setBookForm({...bookForm, mainMessageBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" /></div>
+                    </div>
 
                     <div className="grid md:grid-cols-2 gap-4">
                       <div><label className="block text-sm font-medium mb-1">Summary (English)</label><textarea value={bookForm.summary} onChange={e => setBookForm({...bookForm, summary: e.target.value})} className="w-full border rounded-lg px-3 py-2" rows={4} /></div>
@@ -448,44 +468,46 @@ function AdminPage() {
                     <div><label className="block text-sm font-medium mb-1">Quotes (JSON array)</label><textarea value={bookForm.quotes} onChange={e => setBookForm({...bookForm, quotes: e.target.value})} className="w-full border rounded-lg px-3 py-2 font-mono text-sm" rows={4} placeholder='[{"text": "English", "textBn": "বাংলা"}]' /></div>
 
                     <div className="grid md:grid-cols-2 gap-4">
-                      <div><label className="block text-sm font-medium mb-1">About Author</label><textarea value={bookForm.aboutAuthor} onChange={e => setBookForm({...bookForm, aboutAuthor: e.target.value})} className="w-full border rounded-lg px-3 py-2" rows={3} /></div>
+                      <div><label className="block text-sm font-medium mb-1">About Author (English)</label><textarea value={bookForm.aboutAuthor} onChange={e => setBookForm({...bookForm, aboutAuthor: e.target.value})} className="w-full border rounded-lg px-3 py-2" rows={3} /></div>
                       <div><label className="block text-sm font-medium mb-1 bengali-text">লেখক সম্পর্কে (বাংলা)</label><textarea value={bookForm.aboutAuthorBn} onChange={e => setBookForm({...bookForm, aboutAuthorBn: e.target.value})} className="w-full border rounded-lg px-3 py-2 bengali-text" rows={3} /></div>
                     </div>
 
                     {/* PDF Upload */}
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6">
                       <label className="block text-sm font-medium mb-2 bengali-text">📄 PDF ফাইল আপলোড করুন</label>
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) setPdfFile(file)
-                        }}
-                        className="w-full border rounded-lg px-3 py-2"
-                      />
-                      {pdfFile && (
-                        <p className="text-sm text-green-600 mt-2 bengali-text">
-                          ✅ {pdfFile.name} ({Math.round(pdfFile.size / 1024 / 1024 * 10) / 10} MB)
-                        </p>
-                      )}
+                      <input type="file" accept=".pdf" onChange={(e) => { const file = e.target.files?.[0]; if (file) setPdfFile(file) }} className="w-full border rounded-lg px-3 py-2" />
+                      {pdfFile && <p className="text-sm text-green-600 mt-2 bengali-text">✅ {pdfFile.name} ({Math.round(pdfFile.size / 1024 / 1024 * 10) / 10} MB)</p>}
                     </div>
 
                     {/* Cover Image Upload */}
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6">
                       <label className="block text-sm font-medium mb-2 bengali-text">🖼️ কভার ইমেজ আপলোড করুন</label>
+                      <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) setCoverFile(file) }} className="w-full border rounded-lg px-3 py-2" />
+                      {coverFile && <img src={URL.createObjectURL(coverFile)} alt="Cover preview" className="h-32 object-cover rounded-lg mt-2" />}
+                    </div>
+
+                    {/* Preview Screenshots Upload */}
+                    <div className="border-2 border-dashed border-purple-300 rounded-xl p-6">
+                      <label className="block text-sm font-medium mb-1 bengali-text">📸 ফ্রি প্রিভিউ স্ক্রিনশট (সর্বোচ্চ ৫টি)</label>
+                      <p className="text-xs text-gray-500 mb-3 bengali-text">"ফ্রি প্রিভিউ পড়ুন" বাটনে ক্লিক করলে এই ছবিগুলো দেখাবে</p>
                       <input
                         type="file"
                         accept="image/*"
+                        multiple
                         onChange={(e) => {
-                          const file = e.target.files?.[0]
-                          if (file) setCoverFile(file)
+                          const files = Array.from(e.target.files || []).slice(0, 5)
+                          setPreviewFiles(files)
                         }}
                         className="w-full border rounded-lg px-3 py-2"
                       />
-                      {coverFile && (
-                        <div className="mt-2">
-                          <img src={URL.createObjectURL(coverFile)} alt="Cover preview" className="h-32 object-cover rounded-lg" />
+                      {previewFiles.length > 0 && (
+                        <div className="mt-3 flex gap-2 flex-wrap">
+                          {previewFiles.map((file, i) => (
+                            <div key={i} className="relative">
+                              <img src={URL.createObjectURL(file)} alt={`Preview ${i + 1}`} className="h-20 w-16 object-cover rounded-lg border" />
+                              <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">{i + 1}</span>
+                            </div>
+                          ))}
                         </div>
                       )}
                     </div>
