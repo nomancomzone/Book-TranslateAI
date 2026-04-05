@@ -12,7 +12,6 @@ export default async (req: Request, context: Context) => {
   const url = new URL(req.url);
   const action = url.searchParams.get('action');
 
-  // Book management
   if (action === 'create-book' || action === 'update-book') {
     const bookData = await req.json();
     const bookStore = getStore('books');
@@ -36,7 +35,6 @@ export default async (req: Request, context: Context) => {
     return Response.json({ success: true });
   }
 
-  // PDF upload
   if (action === 'upload-pdf') {
     const formData = await req.formData();
     const bookId = formData.get('bookId') as string;
@@ -57,8 +55,51 @@ export default async (req: Request, context: Context) => {
     if (!bookId || !file) return new Response('Missing data', { status: 400 });
     const coverStore = getStore('covers');
     const buffer = await file.arrayBuffer();
-    await coverStore.set(bookId, buffer);
+    await coverStore.set(bookId, buffer, {
+      metadata: { contentType: file.type || 'image/jpeg' }
+    });
+
+    // Book record এ coverImage URL আপডেট করো
+    const bookStore = getStore('books');
+    const book = await bookStore.get(bookId, { type: 'json' }) as any;
+    if (book) {
+      book.coverImage = `/api/cover?bookId=${bookId}`;
+      await bookStore.setJSON(bookId, book);
+    }
+
     return Response.json({ url: `/api/cover?bookId=${bookId}` });
+  }
+
+  // Preview screenshots upload
+  if (action === 'upload-preview') {
+    const formData = await req.formData();
+    const bookId = formData.get('bookId') as string;
+    const files = formData.getAll('previews') as File[];
+    if (!bookId || !files.length) return new Response('Missing data', { status: 400 });
+
+    const previewStore = getStore('previews');
+    const previewUrls: string[] = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const key = `${bookId}-${i}`;
+      const buffer = await file.arrayBuffer();
+      await previewStore.set(key, buffer, {
+        metadata: { contentType: file.type || 'image/jpeg' }
+      });
+      previewUrls.push(`/api/preview?bookId=${bookId}&index=${i}`);
+    }
+
+    // Book record এ previewImages আপডেট করো
+    const bookStore = getStore('books');
+    const book = await bookStore.get(bookId, { type: 'json' }) as any;
+    if (book) {
+      book.previewImages = previewUrls;
+      book.previewCount = previewUrls.length;
+      await bookStore.setJSON(bookId, book);
+    }
+
+    return Response.json({ success: true, urls: previewUrls });
   }
 
   if (action === 'list-books') {
