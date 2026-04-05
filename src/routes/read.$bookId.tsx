@@ -1,5 +1,5 @@
 import { createFileRoute, useParams, Link } from '@tanstack/react-router'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { Sun, Moon, ArrowLeft, BookOpen } from 'lucide-react'
 import type { Book } from '@/lib/types'
@@ -17,7 +17,6 @@ function ReaderPage() {
   const [nightMode, setNightMode] = useState(false)
   const [notOwned, setNotOwned] = useState(false)
 
-  // Disable right-click, Ctrl+P, Ctrl+S
   useEffect(() => {
     const preventActions = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && ['p','P','s','S'].includes(e.key)) {
@@ -35,24 +34,13 @@ function ReaderPage() {
 
   useEffect(() => {
     if (!isAuthenticated) { setLoading(false); return }
-
-    // Book info লোড করো
     fetch(`/api/books/detail?id=${bookId}`)
       .then(r => r.json())
       .then(async (bookData) => {
         setBook(bookData)
-
-        // User এর library check করো
         const userData = await fetch('/api/user-data').then(r => r.json()).catch(() => ({}))
         const owned = userData?.purchasedBooks?.includes(bookId)
-
-        if (!owned) {
-          setNotOwned(true)
-          setLoading(false)
-          return
-        }
-
-        // PDF আছে কিনা check করো
+        if (!owned) { setNotOwned(true); setLoading(false); return }
         const pdfCheck = await fetch(`/api/pdf?bookId=${bookId}`, { method: 'HEAD' }).catch(() => null)
         setHasPdf(pdfCheck?.ok || false)
         setLoading(false)
@@ -114,18 +102,21 @@ function ReaderPage() {
     )
   }
 
+  const toolbarHeight = 52
+
   return (
-    <div className={`min-h-screen flex flex-col ${nightMode ? 'bg-gray-900' : 'bg-gray-100'}`}>
+    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+      className={nightMode ? 'bg-gray-900' : 'bg-white'}>
+
       {/* Toolbar */}
-      <div className={`sticky top-0 z-40 ${nightMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b shadow-sm`}>
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div style={{ height: `${toolbarHeight}px`, flexShrink: 0 }}
+        className={`z-40 ${nightMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} border-b shadow-sm`}>
+        <div className="h-full px-4 flex items-center justify-between">
           <Link to="/book/$bookId" params={{ bookId }} className="flex items-center gap-2 text-[#1877F2]">
             <ArrowLeft className="w-5 h-5" />
             <span className="text-sm hidden sm:inline bengali-text">বিবরণে ফিরুন</span>
           </Link>
-
           <h2 className="text-sm font-medium truncate max-w-[200px] bengali-text">{book?.titleBn}</h2>
-
           <button onClick={() => setNightMode(!nightMode)}
             className={`p-2 rounded-lg ${nightMode ? 'hover:bg-gray-700 text-yellow-400' : 'hover:bg-gray-100'}`}>
             {nightMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -133,19 +124,23 @@ function ReaderPage() {
         </div>
       </div>
 
-      {/* Invisible watermark */}
+      {/* Watermark */}
       <div className="pointer-events-none fixed inset-0 z-30 opacity-[0.03] flex items-center justify-center rotate-[-30deg] select-none">
         <div className="text-center text-2xl" style={{ letterSpacing: '0.5em', color: nightMode ? '#fff' : '#000' }}>
           {user?.email}<br/>{user?.email}<br/>{user?.email}
         </div>
       </div>
 
-      {/* PDF Viewer */}
-     <div className="flex-1 w-full" style={{ height: 'calc(100vh - 52px)', overflow: 'hidden' }}>
+      {/* PDF Viewer — full remaining height */}
+      <div style={{ flex: 1, overflow: 'hidden' }}>
         <iframe
-          src={`/api/pdf?bookId=${bookId}#toolbar=0&navpanes=0&scrollbar=1`}
-          className="w-full"
-        style={{ height: 'calc(100vh - 52px)', border: 'none', width: '100%', display: 'block' }}
+          src={`/api/pdf?bookId=${bookId}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
+          style={{
+            width: '100%',
+            height: '100%',
+            border: 'none',
+            display: 'block',
+          }}
           title={book?.titleBn || 'Book Reader'}
         />
       </div>
