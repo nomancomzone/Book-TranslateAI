@@ -13,6 +13,7 @@ function ReaderPage() {
   const { user, isAuthenticated, loginWithGoogle } = useAuth()
   const [book, setBook] = useState<Book | null>(null)
   const [loading, setLoading] = useState(true)
+  const [loadingMessage, setLoadingMessage] = useState('বই লোড হচ্ছে...')
   const [hasPdf, setHasPdf] = useState(false)
   const [nightMode, setNightMode] = useState(false)
   const [notOwned, setNotOwned] = useState(false)
@@ -41,8 +42,26 @@ function ReaderPage() {
         const userData = await fetch('/api/user-data').then(r => r.json()).catch(() => ({}))
         const owned = userData?.purchasedBooks?.includes(bookId)
         if (!owned) { setNotOwned(true); setLoading(false); return }
+
+        // PDF check with retry
+        setLoadingMessage('PDF লোড হচ্ছে...')
         const pdfCheck = await fetch(`/api/pdf?bookId=${bookId}`, { method: 'HEAD' }).catch(() => null)
-        setHasPdf(pdfCheck?.ok || false)
+        if (pdfCheck?.ok) {
+          setHasPdf(true)
+          setLoading(false)
+          return
+        }
+
+        // Retry ৩ বার
+        setLoadingMessage('PDF প্রস্তুত হচ্ছে, একটু অপেক্ষা করুন...')
+        let found = false
+        for (let i = 0; i < 3; i++) {
+          await new Promise(r => setTimeout(r, 2000))
+          setLoadingMessage(`PDF লোড হচ্ছে... (${i + 1}/3)`)
+          const retry = await fetch(`/api/pdf?bookId=${bookId}`, { method: 'HEAD' }).catch(() => null)
+          if (retry?.ok) { found = true; break }
+        }
+        setHasPdf(found)
         setLoading(false)
       })
       .catch(() => setLoading(false))
@@ -64,10 +83,17 @@ function ReaderPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[#1877F2] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-500 bengali-text">বই লোড হচ্ছে...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center p-8">
+          <div className="w-16 h-16 border-4 border-[#1877F2] border-t-transparent rounded-full animate-spin mx-auto mb-6" />
+          <p className="text-gray-700 font-medium bengali-text mb-2">{loadingMessage}</p>
+          <p className="text-gray-400 text-sm bengali-text">একটু অপেক্ষা করুন...</p>
+          {book && (
+            <div className="mt-6 p-4 bg-white rounded-xl border max-w-xs mx-auto">
+              <p className="font-bold bengali-text text-sm">{book.titleBn}</p>
+              <p className="text-gray-500 text-xs bengali-text">{book.authorBn}</p>
+            </div>
+          )}
         </div>
       </div>
     )
@@ -131,16 +157,11 @@ function ReaderPage() {
         </div>
       </div>
 
-      {/* PDF Viewer — full remaining height */}
+      {/* PDF Viewer */}
       <div style={{ flex: 1, overflow: 'hidden' }}>
         <iframe
           src={`/api/pdf?bookId=${bookId}#toolbar=0&navpanes=0&scrollbar=1&view=FitH`}
-          style={{
-            width: '100%',
-            height: '100%',
-            border: 'none',
-            display: 'block',
-          }}
+          style={{ width: '100%', height: '100%', border: 'none', display: 'block' }}
           title={book?.titleBn || 'Book Reader'}
         />
       </div>
