@@ -22,7 +22,6 @@ function AdminPage() {
   const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [coverFile, setCoverFile] = useState<File | null>(null)
   const [previewFiles, setPreviewFiles] = useState<File[]>([])
-
   const [editingBook, setEditingBook] = useState<any>(null)
   const [bookForm, setBookForm] = useState({
     title: '', titleBn: '', author: '', authorBn: '', price: 0, originalPrice: 0,
@@ -41,12 +40,8 @@ function AdminPage() {
       method: 'GET',
       headers: { 'x-admin-password': password },
     })
-    if (res.ok) {
-      setAdminPassword(password)
-      setAuthenticated(true)
-    } else {
-      alert('ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।')
-    }
+    if (res.ok) { setAdminPassword(password); setAuthenticated(true) }
+    else alert('ভুল পাসওয়ার্ড! আবার চেষ্টা করুন।')
   }
 
   const fetchData = async (action: string) => {
@@ -91,43 +86,24 @@ function AdminPage() {
 
     if (res.ok) {
       const book = await res.json()
-
-      // PDF upload
       if (pdfFile) {
         const formData = new FormData()
         formData.append('bookId', book.id)
         formData.append('pdf', pdfFile)
-        await fetch(`/api/admin?action=upload-pdf`, {
-          method: 'POST',
-          headers: { 'x-admin-password': adminPassword },
-          body: formData,
-        })
+        await fetch(`/api/admin?action=upload-pdf`, { method: 'POST', headers: { 'x-admin-password': adminPassword }, body: formData })
       }
-
-      // Cover upload
       if (coverFile) {
         const formData = new FormData()
         formData.append('bookId', book.id)
         formData.append('cover', coverFile)
-        await fetch(`/api/admin?action=upload-cover`, {
-          method: 'POST',
-          headers: { 'x-admin-password': adminPassword },
-          body: formData,
-        })
+        await fetch(`/api/admin?action=upload-cover`, { method: 'POST', headers: { 'x-admin-password': adminPassword }, body: formData })
       }
-
-      // Preview screenshots upload
       if (previewFiles.length > 0) {
         const formData = new FormData()
         formData.append('bookId', book.id)
         previewFiles.forEach(file => formData.append('previews', file))
-        await fetch(`/api/admin?action=upload-preview`, {
-          method: 'POST',
-          headers: { 'x-admin-password': adminPassword },
-          body: formData,
-        })
+        await fetch(`/api/admin?action=upload-preview`, { method: 'POST', headers: { 'x-admin-password': adminPassword }, body: formData })
       }
-
       setBooks(await fetchData('list-books'))
       setEditingBook(null)
       resetForm()
@@ -139,20 +115,12 @@ function AdminPage() {
 
   const deleteBook = async (bookId: string) => {
     if (!confirm('এই বই মুছে ফেলতে চান?')) return
-    await fetch(`/api/admin?action=delete-book`, {
-      method: 'POST',
-      headers: { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ bookId }),
-    })
+    await fetch(`/api/admin?action=delete-book`, { method: 'POST', headers: { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' }, body: JSON.stringify({ bookId }) })
     setBooks(books.filter(b => b.id !== bookId))
   }
 
   const togglePublish = async (book: any) => {
-    await fetch(`/api/admin?action=update-book`, {
-      method: 'POST',
-      headers: { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ...book, published: !book.published }),
-    })
+    await fetch(`/api/admin?action=update-book`, { method: 'POST', headers: { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' }, body: JSON.stringify({ ...book, published: !book.published }) })
     setBooks(await fetchData('list-books'))
   }
 
@@ -253,14 +221,9 @@ function AdminPage() {
             <h1 className="text-xl font-bold bengali-text">অ্যাডমিন প্যানেল</h1>
             <p className="text-gray-500 text-sm">Admin Panel Login</p>
           </div>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)}
             placeholder="অ্যাডমিন পাসওয়ার্ড"
-            className="w-full border rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-300"
-            required
-          />
+            className="w-full border rounded-lg px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-300" required />
           <button type="submit" className="w-full bg-[#1877F2] text-white py-3 rounded-lg font-medium bengali-text">লগইন</button>
         </form>
       </div>
@@ -284,7 +247,6 @@ function AdminPage() {
         <h1 className="font-bold bengali-text">📚 TranslatedBook অ্যাডমিন</h1>
         <button onClick={() => setAuthenticated(false)} className="text-sm text-gray-400 hover:text-white">লগআউট</button>
       </div>
-
       <div className="flex">
         <aside className="w-56 bg-white min-h-screen border-r hidden md:block">
           <nav className="p-2 space-y-1">
@@ -475,6 +437,9 @@ function AdminPage() {
                     {/* PDF Upload */}
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6">
                       <label className="block text-sm font-medium mb-2 bengali-text">📄 PDF ফাইল আপলোড করুন</label>
+                      {editingBook?.id && !pdfFile && (
+                        <p className="text-xs text-green-600 mb-2 bengali-text">✅ আগের PDF আপলোড করা আছে</p>
+                      )}
                       <input type="file" accept=".pdf" onChange={(e) => { const file = e.target.files?.[0]; if (file) setPdfFile(file) }} className="w-full border rounded-lg px-3 py-2" />
                       {pdfFile && <p className="text-sm text-green-600 mt-2 bengali-text">✅ {pdfFile.name} ({Math.round(pdfFile.size / 1024 / 1024 * 10) / 10} MB)</p>}
                     </div>
@@ -482,6 +447,12 @@ function AdminPage() {
                     {/* Cover Image Upload */}
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6">
                       <label className="block text-sm font-medium mb-2 bengali-text">🖼️ কভার ইমেজ আপলোড করুন</label>
+                      {editingBook?.coverImage && !coverFile && (
+                        <div className="mb-2">
+                          <p className="text-xs text-green-600 mb-1 bengali-text">✅ আগের কভার:</p>
+                          <img src={`/api/cover?bookId=${editingBook.id}`} alt="Current cover" className="h-24 object-cover rounded-lg border" />
+                        </div>
+                      )}
                       <input type="file" accept="image/*" onChange={(e) => { const file = e.target.files?.[0]; if (file) setCoverFile(file) }} className="w-full border rounded-lg px-3 py-2" />
                       {coverFile && <img src={URL.createObjectURL(coverFile)} alt="Cover preview" className="h-32 object-cover rounded-lg mt-2" />}
                     </div>
@@ -490,22 +461,30 @@ function AdminPage() {
                     <div className="border-2 border-dashed border-purple-300 rounded-xl p-6">
                       <label className="block text-sm font-medium mb-1 bengali-text">📸 ফ্রি প্রিভিউ স্ক্রিনশট (সর্বোচ্চ ৫টি)</label>
                       <p className="text-xs text-gray-500 mb-3 bengali-text">"ফ্রি প্রিভিউ পড়ুন" বাটনে ক্লিক করলে এই ছবিগুলো দেখাবে</p>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => {
-                          const files = Array.from(e.target.files || []).slice(0, 5)
-                          setPreviewFiles(files)
-                        }}
-                        className="w-full border rounded-lg px-3 py-2"
-                      />
+                      {editingBook?.previewImages?.length > 0 && previewFiles.length === 0 && (
+                        <div className="mb-3">
+                          <p className="text-xs text-green-600 mb-2 bengali-text">✅ আগের প্রিভিউ ({editingBook.previewImages.length}টি):</p>
+                          <div className="flex gap-2 flex-wrap">
+                            {editingBook.previewImages.map((url: string, i: number) => (
+                              <img key={i} src={url} alt={`Preview ${i+1}`} className="h-20 w-16 object-cover rounded-lg border" />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <input type="file" accept="image/*" multiple
+                        onChange={(e) => { const files = Array.from(e.target.files || []).slice(0, 5); setPreviewFiles(files) }}
+                        className="w-full border rounded-lg px-3 py-2" />
                       {previewFiles.length > 0 && (
                         <div className="mt-3 flex gap-2 flex-wrap">
                           {previewFiles.map((file, i) => (
                             <div key={i} className="relative">
                               <img src={URL.createObjectURL(file)} alt={`Preview ${i + 1}`} className="h-20 w-16 object-cover rounded-lg border" />
-                              <span className="absolute -top-1 -right-1 bg-purple-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">{i + 1}</span>
+                              <button type="button"
+                                onClick={() => setPreviewFiles(prev => prev.filter((_, idx) => idx !== i))}
+                                className="absolute -top-1 -right-1 bg-red-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center hover:bg-red-600">
+                                ✕
+                              </button>
+                              <span className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center rounded-b-lg py-0.5">{i + 1}</span>
                             </div>
                           ))}
                         </div>

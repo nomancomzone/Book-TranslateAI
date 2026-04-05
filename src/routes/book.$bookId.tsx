@@ -113,21 +113,28 @@ function BookDetailPage() {
   }
 
   const submitReview = async () => {
-    if (!reviewText.trim()) return
-    setSubmittingReview(true)
-    try {
-      const res = await fetch('/api/reviews', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ bookId, rating: reviewRating, comment: reviewText }),
-      })
-      if (res.ok) {
-        setReviewText('')
-        setReviewRating(5)
-        alert('আপনার রিভিউ জমা হয়েছে। অনুমোদনের পর প্রদর্শিত হবে।')
-      }
-    } catch {} finally { setSubmittingReview(false) }
-  }
+  if (!reviewText.trim()) return
+  if (!isAuthenticated) { loginWithGoogle(); return }
+  setSubmittingReview(true)
+  try {
+    const res = await fetch('/api/reviews', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-user-email': user?.email || '',
+        'x-user-name': user?.name || '',
+      },
+      body: JSON.stringify({ bookId, rating: reviewRating, comment: reviewText }),
+    })
+    if (res.ok) {
+      const newReview = await res.json()
+      setReviews(prev => [...prev, newReview])
+      setReviewText('')
+      setReviewRating(5)
+      alert('✅ আপনার রিভিউ জমা হয়েছে!')
+    }
+  } catch {} finally { setSubmittingReview(false) }
+}
 
   const moodColors: Record<string, string> = {
     motivational: 'bg-green-100 text-green-700',
