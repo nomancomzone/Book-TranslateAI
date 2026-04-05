@@ -158,17 +158,16 @@ export default async (req: Request, context: Context) => {
   }
 
   if (action === 'list-wishlists') {
-    const userStore = getStore('users');
-    const { blobs } = await userStore.list();
+    const wishlistStore = getStore('wishlists');
+    const { blobs } = await wishlistStore.list();
     const allWishlists: any[] = [];
     for (const blob of blobs) {
-      const user = await userStore.get(blob.key, { type: 'json' }) as any;
-      if (user?.wishlist?.length) {
-        for (const item of user.wishlist) {
-          allWishlists.push({ ...item, userEmail: user.email, userName: user.name });
-        }
+      const items = await wishlistStore.get(blob.key, { type: 'json' }) as any[] || [];
+      for (const item of items) {
+        allWishlists.push(item);
       }
     }
+    allWishlists.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return Response.json(allWishlists);
   }
 
