@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth-context'
 import { addToCart } from '@/lib/store'
 import { BookCard } from '@/components/BookCard'
 import type { Book, Review } from '@/lib/types'
-import { Star, ShoppingCart, CreditCard, Clock, Users, BookOpen, Quote, ChevronDown, ChevronUp, User, Tag } from 'lucide-react'
+import { Star, ShoppingCart, CreditCard, Clock, Users, BookOpen, Quote, ChevronDown, ChevronUp, User, Tag, Edit2 } from 'lucide-react'
 
 export const Route = createFileRoute('/book/$bookId')({
   component: BookDetailPage,
@@ -23,6 +23,7 @@ function BookDetailPage() {
   const [reviewText, setReviewText] = useState('')
   const [reviewRating, setReviewRating] = useState(5)
   const [submittingReview, setSubmittingReview] = useState(false)
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null)
   const [couponCode, setCouponCode] = useState('')
   const [couponApplied, setCouponApplied] = useState(false)
   const [bookOwned, setBookOwned] = useState(false)
@@ -49,16 +50,11 @@ function BookDetailPage() {
       .catch(() => {})
   }, [bookId])
 
-  // User এর library check করা
   useEffect(() => {
     if (!isAuthenticated) return
     fetch('/api/user-data')
       .then(r => r.json())
-      .then(data => {
-        if (data.purchasedBooks?.includes(bookId)) {
-          setBookOwned(true)
-        }
-      })
+      .then(data => { if (data.purchasedBooks?.includes(bookId)) setBookOwned(true) })
       .catch(() => {})
   }, [isAuthenticated, bookId])
 
@@ -87,54 +83,50 @@ function BookDetailPage() {
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) { loginWithGoogle(); return }
-
     if (couponApplied) {
       await addToLibrary()
       alert('✅ বইটি আপনার লাইব্রেরিতে যোগ হয়েছে!')
       window.location.href = `/read/${bookId}`
       return
     }
-
-    if (bookOwned) {
-      window.location.href = `/read/${bookId}`
-      return
-    }
-
+    if (bookOwned) { window.location.href = `/read/${bookId}`; return }
     addToCart(bookId)
     window.location.href = '/checkout'
   }
 
   const handleAddToCart = () => {
-    if (bookOwned) {
-      window.location.href = `/read/${bookId}`
-      return
-    }
+    if (bookOwned) { window.location.href = `/read/${bookId}`; return }
     addToCart(bookId)
   }
 
   const submitReview = async () => {
-  if (!reviewText.trim()) return
-  if (!isAuthenticated) { loginWithGoogle(); return }
-  setSubmittingReview(true)
-  try {
-    const res = await fetch('/api/reviews', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user-email': user?.email || '',
-        'x-user-name': user?.name || '',
-      },
-      body: JSON.stringify({ bookId, rating: reviewRating, comment: reviewText }),
-    })
-    if (res.ok) {
-      const newReview = await res.json()
-      setReviews(prev => [...prev, newReview])
-      setReviewText('')
-      setReviewRating(5)
-      alert('✅ আপনার রিভিউ জমা হয়েছে!')
-    }
-  } catch {} finally { setSubmittingReview(false) }
-}
+    if (!reviewText.trim()) return
+    if (!isAuthenticated) { loginWithGoogle(); return }
+    setSubmittingReview(true)
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user?.email || '',
+          'x-user-name': user?.name || '',
+        },
+        body: JSON.stringify({ bookId, rating: reviewRating, comment: reviewText, editId: editingReviewId }),
+      })
+      if (res.ok) {
+        const updated = await res.json()
+        if (editingReviewId) {
+          setReviews(prev => prev.map(r => r.id === editingReviewId ? updated : r))
+        } else {
+          setReviews(prev => [...prev, updated])
+        }
+        setReviewText('')
+        setReviewRating(5)
+        setEditingReviewId(null)
+        alert(editingReviewId ? '✅ রিভিউ আপডেট হয়েছে!' : '✅ রিভিউ জমা হয়েছে!')
+      }
+    } catch {} finally { setSubmittingReview(false) }
+  }
 
   const moodColors: Record<string, string> = {
     motivational: 'bg-green-100 text-green-700',
@@ -175,7 +167,6 @@ function BookDetailPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
         <Link to="/" className="hover:text-[#1877F2]">হোম</Link>
         <span>/</span>
@@ -185,18 +176,12 @@ function BookDetailPage() {
       </nav>
 
       <div className="grid md:grid-cols-3 gap-8">
-        {/* Book Cover — Sticky sidebar */}
         <div className="md:col-span-1">
           <div className="sticky top-4 space-y-3">
-            {/* Cover */}
             <div className="aspect-[3/4] bg-gradient-to-br from-blue-50 to-indigo-100 rounded-xl overflow-hidden shadow-lg">
               {(book as any).coverImage ? (
-                <img
-                  src={`/api/cover?bookId=${book.id}`}
-                  alt={book.title}
-                  className="w-full h-full object-cover"
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                />
+                <img src={`/api/cover?bookId=${book.id}`} alt={book.title} className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center p-8">
                   <span className="text-7xl mb-4">📖</span>
@@ -206,12 +191,9 @@ function BookDetailPage() {
               )}
             </div>
 
-            {/* Action buttons */}
             {bookOwned ? (
-              <button
-                onClick={() => window.location.href = `/read/${bookId}`}
-                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium transition-colors bengali-text"
-              >
+              <button onClick={() => window.location.href = `/read/${bookId}`}
+                className="w-full flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-medium transition-colors bengali-text">
                 <BookOpen className="w-5 h-5" /> বই পড়ুন
               </button>
             ) : (
@@ -225,51 +207,38 @@ function BookDetailPage() {
               </>
             )}
 
-            {/* Free Preview */}
             {previewImages.length > 0 && (
               <button onClick={() => setPreviewOpen(true)} className="w-full flex items-center justify-center gap-2 border-2 border-[#1877F2] text-[#1877F2] hover:bg-blue-50 py-3 rounded-xl font-medium transition-colors bengali-text">
                 <BookOpen className="w-5 h-5" /> ফ্রি প্রিভিউ পড়ুন
               </button>
             )}
 
-            {/* Coupon Code */}
             {!bookOwned && (
               <div className="p-4 bg-gray-50 rounded-xl border">
                 <p className="text-sm font-medium mb-2 bengali-text flex items-center gap-1">
                   <Tag className="w-4 h-4" /> কুপন কোড আছে?
                 </p>
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={couponCode}
-                    onChange={(e) => setCouponCode(e.target.value)}
+                  <input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value)}
                     placeholder="কোড লিখুন"
                     className="flex-1 border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-300"
-                    disabled={couponApplied}
-                  />
-                  <button
-                    onClick={applyCoupon}
-                    disabled={couponApplied || !couponCode.trim()}
-                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 bengali-text"
-                  >
+                    disabled={couponApplied} />
+                  <button onClick={applyCoupon} disabled={couponApplied || !couponCode.trim()}
+                    className="bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-sm font-medium disabled:opacity-50 bengali-text">
                     {couponApplied ? '✅' : 'প্রয়োগ'}
                   </button>
                 </div>
-                {couponApplied && (
-                  <p className="text-green-600 text-sm mt-2 bengali-text">✅ ১০০% ছাড় প্রয়োগ হয়েছে!</p>
-                )}
+                {couponApplied && <p className="text-green-600 text-sm mt-2 bengali-text">✅ ১০০% ছাড় প্রয়োগ হয়েছে!</p>}
               </div>
             )}
           </div>
         </div>
 
-        {/* Details */}
         <div className="md:col-span-2 space-y-8">
           <div>
             <h1 className="text-3xl font-bold bengali-text">{book.titleBn}</h1>
             <p className="text-gray-500 mt-1">{book.title}</p>
             <p className="text-lg text-gray-600 mt-2 bengali-text">লেখক: <span className="text-gray-900 font-medium">{book.authorBn}</span></p>
-
             <div className="flex flex-wrap items-center gap-3 mt-4">
               <div className="flex items-center gap-1">
                 {[1,2,3,4,5].map((s) => (
@@ -283,7 +252,6 @@ function BookDetailPage() {
               <span className="text-gray-300">|</span>
               <span className="flex items-center gap-1 text-gray-500 text-sm"><Clock className="w-4 h-4" /> {book.readingTime}</span>
             </div>
-
             <div className="flex items-baseline gap-3 mt-4">
               {bookOwned ? (
                 <span className="text-2xl font-bold text-green-600 bengali-text">✅ আপনার লাইব্রেরিতে আছে</span>
@@ -308,7 +276,6 @@ function BookDetailPage() {
             </div>
           </div>
 
-          {/* Tags */}
           <div className="flex flex-wrap gap-2">
             <span className="bg-[#1877F2]/10 text-[#1877F2] px-3 py-1 rounded-full text-sm font-medium bengali-text">{book.categoryBn}</span>
             <span className={`px-3 py-1 rounded-full text-sm font-medium ${moodColors[book.mood] || 'bg-gray-100 text-gray-700'} bengali-text`}>{book.moodBn}</span>
@@ -317,24 +284,19 @@ function BookDetailPage() {
             ))}
           </div>
 
-          {/* Main Message */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl border border-blue-100">
             <h3 className="font-bold text-sm text-[#1877F2] mb-2 bengali-text">📌 মূল বার্তা</h3>
             <p className="text-lg font-medium bengali-text">{book.mainMessageBn}</p>
           </div>
 
-          {/* Summary */}
           <div>
             <h3 className="text-xl font-bold mb-3 bengali-text">📝 সারসংক্ষেপ</h3>
-            <div className={`bengali-text text-gray-700 leading-relaxed ${!showFullSummary ? 'line-clamp-3' : ''}`}>
-              {book.summaryBn}
-            </div>
+            <div className={`bengali-text text-gray-700 leading-relaxed ${!showFullSummary ? 'line-clamp-3' : ''}`}>{book.summaryBn}</div>
             <button onClick={() => setShowFullSummary(!showFullSummary)} className="text-[#1877F2] text-sm mt-2 flex items-center gap-1 bengali-text">
               {showFullSummary ? <><ChevronUp className="w-4 h-4" /> সংক্ষেপ করুন</> : <><ChevronDown className="w-4 h-4" /> পুরোটা পড়ুন</>}
             </button>
           </div>
 
-          {/* Key Points */}
           <div>
             <h3 className="text-xl font-bold mb-3 bengali-text">🔑 মূল বিষয়গুলো</h3>
             <ul className="space-y-2">
@@ -347,13 +309,11 @@ function BookDetailPage() {
             </ul>
           </div>
 
-          {/* Target Audience */}
           <div className="bg-green-50 p-6 rounded-xl border border-green-100">
             <h3 className="font-bold mb-2 bengali-text">👥 এই বইটি কাদের জন্য</h3>
             <p className="text-gray-700 bengali-text">{book.targetAudienceBn}</p>
           </div>
 
-          {/* Quotes */}
           {book.quotes?.length > 0 && (
             <div>
               <h3 className="text-xl font-bold mb-4 bengali-text">💬 বিখ্যাত উক্তি</h3>
@@ -369,7 +329,6 @@ function BookDetailPage() {
             </div>
           )}
 
-          {/* About Author */}
           <div className="bg-gray-50 p-6 rounded-xl">
             <h3 className="text-xl font-bold mb-3 bengali-text">✍️ লেখক সম্পর্কে</h3>
             <div className="flex items-start gap-4">
@@ -384,7 +343,6 @@ function BookDetailPage() {
             </div>
           </div>
 
-          {/* Rating Breakdown */}
           <div>
             <h3 className="text-xl font-bold mb-4 bengali-text">⭐ রেটিং</h3>
             <div className="flex gap-8">
@@ -420,7 +378,9 @@ function BookDetailPage() {
             <h3 className="text-xl font-bold mb-4 bengali-text">💬 পাঠক রিভিউ</h3>
             {isAuthenticated && (
               <div className="bg-gray-50 p-4 rounded-xl mb-6">
-                <h4 className="font-medium mb-3 bengali-text">আপনার রিভিউ লিখুন</h4>
+                <h4 className="font-medium mb-3 bengali-text">
+                  {editingReviewId ? '✏️ রিভিউ সম্পাদনা করুন' : 'আপনার রিভিউ লিখুন'}
+                </h4>
                 <div className="flex items-center gap-2 mb-3">
                   {[1,2,3,4,5].map((s) => (
                     <button key={s} onClick={() => setReviewRating(s)}>
@@ -435,9 +395,19 @@ function BookDetailPage() {
                   className="w-full border rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-300 focus:outline-none bengali-text"
                   rows={3}
                 />
-                <button onClick={submitReview} disabled={submittingReview} className="mt-2 bg-[#1877F2] text-white px-6 py-2 rounded-lg text-sm font-medium disabled:opacity-50 bengali-text">
-                  {submittingReview ? 'জমা হচ্ছে...' : 'রিভিউ জমা দিন'}
-                </button>
+                <div className="flex gap-2 mt-2">
+                  <button onClick={submitReview} disabled={submittingReview}
+                    className="bg-[#1877F2] text-white px-6 py-2 rounded-lg text-sm font-medium disabled:opacity-50 bengali-text">
+                    {submittingReview ? 'জমা হচ্ছে...' : editingReviewId ? 'আপডেট করুন' : 'রিভিউ জমা দিন'}
+                  </button>
+                  {editingReviewId && (
+                    <button
+                      onClick={() => { setEditingReviewId(null); setReviewText(''); setReviewRating(5) }}
+                      className="border px-4 py-2 rounded-lg text-sm bengali-text">
+                      বাতিল
+                    </button>
+                  )}
+                </div>
               </div>
             )}
             {reviews.length > 0 ? (
@@ -457,6 +427,19 @@ function BookDetailPage() {
                         </div>
                       </div>
                       <span className="text-xs text-gray-400 ml-auto">{new Date(review.createdAt).toLocaleDateString('bn-BD')}</span>
+                      {user?.email === (review as any).userEmail && (
+                        <button
+                          onClick={() => {
+                            setEditingReviewId(review.id)
+                            setReviewText(review.comment)
+                            setReviewRating(review.rating)
+                            window.scrollTo({ top: document.querySelector('.bg-gray-50')?.getBoundingClientRect().top ?? 0 + window.scrollY - 100, behavior: 'smooth' })
+                          }}
+                          className="flex items-center gap-1 text-xs text-[#1877F2] hover:underline bengali-text ml-2"
+                        >
+                          <Edit2 className="w-3 h-3" /> সম্পাদনা
+                        </button>
+                      )}
                     </div>
                     <p className="text-gray-700 text-sm bengali-text">{review.comment}</p>
                   </div>
@@ -469,7 +452,6 @@ function BookDetailPage() {
         </div>
       </div>
 
-      {/* Preview Modal */}
       {previewOpen && previewImages.length > 0 && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col">
@@ -482,27 +464,20 @@ function BookDetailPage() {
             </div>
             <div className="p-4 border-t flex items-center justify-between bg-gray-50">
               <button onClick={() => setPreviewIndex(Math.max(0, previewIndex - 1))} disabled={previewIndex === 0}
-                className="px-4 py-2 bg-[#1877F2] text-white rounded-lg disabled:opacity-40 bengali-text text-sm">
-                ← আগের পাতা
-              </button>
+                className="px-4 py-2 bg-[#1877F2] text-white rounded-lg disabled:opacity-40 bengali-text text-sm">← আগের পাতা</button>
               <span className="text-sm text-gray-500 bengali-text">{previewIndex + 1} / {previewImages.length}</span>
               {previewIndex < previewImages.length - 1 ? (
                 <button onClick={() => setPreviewIndex(previewIndex + 1)}
-                  className="px-4 py-2 bg-[#1877F2] text-white rounded-lg bengali-text text-sm">
-                  পরের পাতা →
-                </button>
+                  className="px-4 py-2 bg-[#1877F2] text-white rounded-lg bengali-text text-sm">পরের পাতা →</button>
               ) : (
                 <button onClick={() => { setPreviewOpen(false); handleBuyNow() }}
-                  className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg bengali-text text-sm">
-                  ৳{book.price} দিয়ে কিনুন
-                </button>
+                  className="px-4 py-2 bg-[#FF6B35] text-white rounded-lg bengali-text text-sm">৳{book.price} দিয়ে কিনুন</button>
               )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Related Books */}
       {relatedBooks.length > 0 && (
         <section className="mt-16">
           <h2 className="text-2xl font-bold mb-6 bengali-text">📚 সম্পর্কিত বই</h2>
