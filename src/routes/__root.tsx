@@ -1,4 +1,4 @@
-import { HeadContent, Scripts, createRootRoute, Outlet } from '@tanstack/react-router'
+import { HeadContent, Scripts, createRootRoute, Outlet, useRouterState } from '@tanstack/react-router'
 import { AuthProvider } from '@/lib/auth-context'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
@@ -22,6 +22,17 @@ export const Route = createRootRoute({
 })
 
 function RootComponent() {
+  const router = useRouterState()
+  const isReaderPage = router.location.pathname.startsWith('/read/')
+
+  if (isReaderPage) {
+    return (
+      <AuthProvider>
+        <Outlet />
+      </AuthProvider>
+    )
+  }
+
   return (
     <AuthProvider>
       <Header />
