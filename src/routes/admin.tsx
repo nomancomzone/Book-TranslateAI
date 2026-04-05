@@ -78,7 +78,7 @@ function AdminPage() {
     const data = {
       ...bookForm, tags, tagsBn, keyPoints, keyPointsBn, quotes,
       price: Number(bookForm.price), originalPrice: Number(bookForm.originalPrice),
-      previewPages: [], relatedBookIds: [], coverImage: '',
+      previewPages: [], relatedBookIds: [],
       ...(editingBook ? { id: editingBook.id } : {}),
     }
 
