@@ -141,11 +141,11 @@ function ReaderPage() {
       </div>
 
       {/* PDF Viewer */}
-     <div className="flex-1 w-full">
+     <div className="flex-1 w-full" style={{ height: 'calc(100vh - 52px)', overflow: 'hidden' }}>
         <iframe
           src={`/api/pdf?bookId=${bookId}#toolbar=0&navpanes=0&scrollbar=1`}
-          className="w-full rounded-xl shadow-lg"
-         style={{ height: 'calc(100vh - 60px)', border: 'none', position: 'fixed', top: '60px', left: 0, right: 0, bottom: 0, width: '100%', zIndex: 10 }}
+          className="w-full"
+        style={{ height: 'calc(100vh - 52px)', border: 'none', width: '100%', display: 'block' }}
           title={book?.titleBn || 'Book Reader'}
         />
       </div>
