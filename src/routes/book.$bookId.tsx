@@ -377,7 +377,7 @@ function BookDetailPage() {
           <div>
             <h3 className="text-xl font-bold mb-4 bengali-text">💬 পাঠক রিভিউ</h3>
             {isAuthenticated && (
-              <div className="bg-gray-50 p-4 rounded-xl mb-6">
+              <div id="review-form" className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-6">
                 <h4 className="font-medium mb-3 bengali-text">
                   {editingReviewId ? '✏️ রিভিউ সম্পাদনা করুন' : 'আপনার রিভিউ লিখুন'}
                 </h4>
@@ -401,9 +401,8 @@ function BookDetailPage() {
                     {submittingReview ? 'জমা হচ্ছে...' : editingReviewId ? 'আপডেট করুন' : 'রিভিউ জমা দিন'}
                   </button>
                   {editingReviewId && (
-                    <button
-                      onClick={() => { setEditingReviewId(null); setReviewText(''); setReviewRating(5) }}
-                      className="border px-4 py-2 rounded-lg text-sm bengali-text">
+                    <button onClick={() => { setEditingReviewId(null); setReviewText(''); setReviewRating(5) }}
+                      className="border px-4 py-2 rounded-lg text-sm bengali-text bg-white">
                       বাতিল
                     </button>
                   )}
@@ -413,7 +412,7 @@ function BookDetailPage() {
             {reviews.length > 0 ? (
               <div className="space-y-4">
                 {reviews.map((review) => (
-                  <div key={review.id} className="bg-white border rounded-xl p-4">
+                  <div key={review.id} className={`bg-white border rounded-xl p-4 ${editingReviewId === review.id ? 'border-blue-300 bg-blue-50' : ''}`}>
                     <div className="flex items-center gap-3 mb-2">
                       <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center">
                         <User className="w-4 h-4 text-gray-500" />
@@ -433,7 +432,9 @@ function BookDetailPage() {
                             setEditingReviewId(review.id)
                             setReviewText(review.comment)
                             setReviewRating(review.rating)
-                            window.scrollTo({ top: document.querySelector('.bg-gray-50')?.getBoundingClientRect().top ?? 0 + window.scrollY - 100, behavior: 'smooth' })
+                            setTimeout(() => {
+                              document.getElementById('review-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                            }, 100)
                           }}
                           className="flex items-center gap-1 text-xs text-[#1877F2] hover:underline bengali-text ml-2"
                         >
