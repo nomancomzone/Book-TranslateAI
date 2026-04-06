@@ -4,7 +4,7 @@ import { useAuth } from '@/lib/auth-context'
 import { addToCart } from '@/lib/store'
 import { BookCard } from '@/components/BookCard'
 import type { Book, Review } from '@/lib/types'
-import { Star, ShoppingCart, CreditCard, Clock, Users, BookOpen, Quote, ChevronDown, ChevronUp, User, Tag, Edit2 } from 'lucide-react'
+import { Star, ShoppingCart, CreditCard, Clock, Users, BookOpen, Quote, ChevronDown, ChevronUp, User, Tag, Edit2, Trash2 } from 'lucide-react'
 
 export const Route = createFileRoute('/book/$bookId')({
   component: BookDetailPage,
@@ -126,6 +126,24 @@ function BookDetailPage() {
         alert(editingReviewId ? '✅ রিভিউ আপডেট হয়েছে!' : '✅ রিভিউ জমা হয়েছে!')
       }
     } catch {} finally { setSubmittingReview(false) }
+  }
+
+  const deleteReview = async (reviewId: string) => {
+    if (!confirm('এই রিভিউ মুছে ফেলতে চান?')) return
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-email': user?.email || '',
+        },
+        body: JSON.stringify({ bookId, reviewId }),
+      })
+      if (res.ok) {
+        setReviews(prev => prev.filter(r => r.id !== reviewId))
+        alert('✅ রিভিউ মুছে ফেলা হয়েছে!')
+      }
+    } catch {}
   }
 
   const moodColors: Record<string, string> = {
@@ -427,19 +445,28 @@ function BookDetailPage() {
                       </div>
                       <span className="text-xs text-gray-400 ml-auto">{new Date(review.createdAt).toLocaleDateString('bn-BD')}</span>
                       {user?.email === (review as any).userEmail && (
-                        <button
-                          onClick={() => {
-                            setEditingReviewId(review.id)
-                            setReviewText(review.comment)
-                            setReviewRating(review.rating)
-                            setTimeout(() => {
-                              document.getElementById('review-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                            }, 100)
-                          }}
-                          className="flex items-center gap-1 text-xs text-[#1877F2] hover:underline bengali-text ml-2"
-                        >
-                          <Edit2 className="w-3 h-3" /> সম্পাদনা
-                        </button>
+                        <div className="flex items-center gap-1 ml-2">
+                          <button
+                            onClick={() => {
+                              setEditingReviewId(review.id)
+                              setReviewText(review.comment)
+                              setReviewRating(review.rating)
+                              setTimeout(() => {
+                                document.getElementById('review-form')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                              }, 100)
+                            }}
+                            className="flex items-center gap-1 text-xs text-[#1877F2] hover:underline bengali-text"
+                          >
+                            <Edit2 className="w-3 h-3" /> সম্পাদনা
+                          </button>
+                          <span className="text-gray-300">|</span>
+                          <button
+                            onClick={() => deleteReview(review.id)}
+                            className="flex items-center gap-1 text-xs text-red-500 hover:underline bengali-text"
+                          >
+                            <Trash2 className="w-3 h-3" /> মুছুন
+                          </button>
+                        </div>
                       )}
                     </div>
                     <p className="text-gray-700 text-sm bengali-text">{review.comment}</p>
