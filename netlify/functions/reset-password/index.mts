@@ -3,57 +3,20 @@ import type { Context } from '@netlify/functions';
 export default async (req: Request, context: Context) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
-  const { email, newPassword } = await req.json();
-  if (!email || !newPassword) return new Response('Missing fields', { status: 400 });
+  const { email } = await req.json();
+  if (!email) return new Response('Missing email', { status: 400 });
 
-  const adminToken = Netlify.env.get('NETLIFY_ACCESS_TOKEN') || '';
-  if (!adminToken) {
-    return Response.json({ success: false, message: 'Server configuration error' }, { status: 500 });
-  }
-
-  // GoTrue API directly on the site
-  const baseUrl = 'https://translatedbook.com/.netlify/identity';
-
-  // Admin token দিয়ে users list করো
-  const searchRes = await fetch(`${baseUrl}/admin/users`, {
-    headers: {
-      'Authorization': `Bearer ${adminToken}`,
-      'Content-Type': 'application/json',
-    }
+  const res = await fetch('https://translatedbook.com/.netlify/identity/recover', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
   });
 
-  if (!searchRes.ok) {
-    const errText = await searchRes.text();
-    return Response.json({ 
-      success: false, 
-      message: `GoTrue API ${searchRes.status}: ${errText.slice(0, 200)}` 
-    }, { status: 400 });
+  if (!res.ok) {
+    return Response.json({ success: false, message: 'পাসওয়ার্ড রিসেট করতে সমস্যা হয়েছে' }, { status: 500 });
   }
 
-  const data = await searchRes.json();
-  const users = data?.users || [];
-  const foundUser = users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
-
-  if (!foundUser) {
-    return Response.json({ success: false, message: 'এই email দিয়ে কোনো account নেই' }, { status: 400 });
-  }
-
-  // Password update
-  const updateRes = await fetch(`${baseUrl}/admin/users/${foundUser.id}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${adminToken}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ password: newPassword }),
-  });
-
-  if (!updateRes.ok) {
-    const errText = await updateRes.text();
-    return Response.json({ success: false, message: `Update error: ${errText.slice(0, 200)}` }, { status: 500 });
-  }
-
-  return Response.json({ success: true, message: 'পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!' });
+  return Response.json({ success: true, message: 'পাসওয়ার্ড রিসেট লিংক পাঠানো হয়েছে!' });
 };
 
 export const config = {
