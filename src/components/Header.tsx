@@ -1,24 +1,26 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useAuth } from '@/lib/auth-context'
 import { useStore } from '@tanstack/react-store'
 import { appStore, toggleCart, setSearchQuery } from '@/lib/store'
 import { CATEGORIES } from '@/lib/types'
-import { Search, ShoppingCart, Heart, User, Menu, X, Mail, Lock, Eye, EyeOff } from 'lucide-react'
+import { Search, ShoppingCart, Heart, User, Menu, X, Mail, Lock, Eye, EyeOff, KeyRound } from 'lucide-react'
 
 export function Header() {
-  const { user, loginWithGoogle, loginWithFacebook, loginWithEmail, signupWithEmail, logout, isAuthenticated } = useAuth()
+  const { user, loginWithGoogle, loginWithEmail, signupWithEmail, logout, isAuthenticated } = useAuth()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login')
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'otp'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [name, setName] = useState('')
+  const [otp, setOtp] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
+  const [pendingSignup, setPendingSignup] = useState<{name: string, email: string, password: string} | null>(null)
   const cart = useStore(appStore, (s) => s.cart)
   const navigate = useNavigate()
 
@@ -34,8 +36,11 @@ export function Header() {
     setPassword('')
     setConfirmPassword('')
     setName('')
+    setOtp('')
     setAuthError('')
     setShowPassword(false)
+    setPendingSignup(null)
+    setAuthMode('login')
   }
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -57,29 +62,90 @@ export function Header() {
     }
   }
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignupRequest = async (e: React.FormEvent) => {
     e.preventDefault()
     setAuthError('')
-    if (password !== confirmPassword) {
-      setAuthError('পাসওয়ার্ড মিলছে না!')
-      return
-    }
-    if (password.length < 6) {
-      setAuthError('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!')
-      return
-    }
+    if (password !== confirmPassword) { setAuthError('পাসওয়ার্ড মিলছে না!'); return }
+    if (password.length < 6) { setAuthError('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!'); return }
+    if (!name.trim()) { setAuthError('নাম দিন!'); return }
+
     setAuthLoading(true)
     try {
-      const success = await signupWithEmail(name, email, password)
+      // OTP পাঠাও
+      const res = await fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      if (res.ok) {
+        setPendingSignup({ name, email, password })
+        setAuthMode('otp')
+        setAuthError('')
+      } else {
+        setAuthError('OTP পাঠাতে সমস্যা হয়েছে। আবার চেষ্টা করুন।')
+      }
+    } catch {
+      setAuthError('নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setAuthError('')
+    if (!otp.trim() || otp.length !== 6) { setAuthError('৬ সংখ্যার OTP দিন!'); return }
+    if (!pendingSignup) return
+
+    setAuthLoading(true)
+    try {
+      // OTP verify করো
+      const verifyRes = await fetch('/api/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingSignup.email, otp }),
+      })
+      const verifyData = await verifyRes.json()
+
+      if (!verifyRes.ok || !verifyData.success) {
+        setAuthError(verifyData.message || 'ভুল OTP!')
+        setAuthLoading(false)
+        return
+      }
+
+      // OTP সঠিক — account বানাও
+      const success = await signupWithEmail(pendingSignup.name, pendingSignup.email, pendingSignup.password)
       if (success) {
         setShowAuthModal(false)
         resetAuth()
-        alert('✅ অ্যাকাউন্ট তৈরি হয়েছে! ইমেইল যাচাই করুন।')
+        alert('✅ অ্যাকাউন্ট তৈরি হয়েছে! স্বাগতম!')
       } else {
         setAuthError('অ্যাকাউন্ট তৈরি করতে সমস্যা হয়েছে।')
       }
     } catch {
-      setAuthError('এই ইমেইল দিয়ে আগেই অ্যাকাউন্ট আছে।')
+      setAuthError('সমস্যা হয়েছে। আবার চেষ্টা করুন।')
+    } finally {
+      setAuthLoading(false)
+    }
+  }
+
+  const resendOtp = async () => {
+    if (!pendingSignup) return
+    setAuthError('')
+    setAuthLoading(true)
+    try {
+      const res = await fetch('/api/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: pendingSignup.email }),
+      })
+      if (res.ok) {
+        alert('✅ নতুন OTP পাঠানো হয়েছে!')
+      } else {
+        setAuthError('OTP পাঠাতে সমস্যা হয়েছে।')
+      }
+    } catch {
+      setAuthError('নেটওয়ার্ক সমস্যা।')
     } finally {
       setAuthLoading(false)
     }
@@ -93,10 +159,8 @@ export function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white shadow-md">
-        {/* Main Header */}
         <div className="bg-[#1877F2]">
           <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
-            {/* Logo */}
             <Link to="/" className="flex items-center gap-2 shrink-0">
               <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
                 <span className="text-[#1877F2] font-bold text-xl">📚</span>
@@ -107,23 +171,17 @@ export function Header() {
               </div>
             </Link>
 
-            {/* Search Bar */}
             <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-xl">
               <div className="flex w-full">
-                <input
-                  type="text"
-                  placeholder="বই বা লেখকের নাম খুঁজুন... / Search books..."
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  className="flex-1 px-4 py-2.5 rounded-l-lg border-0 focus:outline-none text-gray-800"
-                />
+                <input type="text" placeholder="বই বা লেখকের নাম খুঁজুন... / Search books..."
+                  value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
+                  className="flex-1 px-4 py-2.5 rounded-l-lg border-0 focus:outline-none text-gray-800" />
                 <button type="submit" className="bg-[#FF6B35] hover:bg-orange-600 text-white px-5 py-2.5 rounded-r-lg transition-colors">
                   <Search className="w-5 h-5" />
                 </button>
               </div>
             </form>
 
-            {/* Action Buttons */}
             <div className="flex items-center gap-2 sm:gap-3 ml-auto">
               <Link to="/wishlist" className="text-white hover:text-blue-100 relative p-2">
                 <Heart className="w-5 h-5" />
@@ -148,10 +206,8 @@ export function Header() {
                   </Link>
                 </div>
               ) : (
-                <button
-                  onClick={() => { setAuthMode('login'); setShowAuthModal(true) }}
-                  className="hidden sm:flex items-center gap-2 bg-white text-[#1877F2] px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors bengali-text"
-                >
+                <button onClick={() => { setAuthMode('login'); setShowAuthModal(true) }}
+                  className="hidden sm:flex items-center gap-2 bg-white text-[#1877F2] px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-50 transition-colors bengali-text">
                   <User className="w-4 h-4" /> লগইন / সাইন আপ
                 </button>
               )}
@@ -162,7 +218,6 @@ export function Header() {
           </div>
         </div>
 
-        {/* Category Navigation */}
         <nav className="hidden md:block bg-white border-b">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex items-center gap-1 overflow-x-auto py-2">
@@ -179,7 +234,6 @@ export function Header() {
           </div>
         </nav>
 
-        {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden bg-white border-b shadow-lg">
             <div className="p-4">
@@ -225,7 +279,6 @@ export function Header() {
       {showAuthModal && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden">
-            {/* Modal Header */}
             <div className="bg-[#1877F2] p-6 text-white text-center relative">
               <button onClick={() => { setShowAuthModal(false); resetAuth() }}
                 className="absolute right-4 top-4 hover:bg-blue-600 p-1 rounded-lg">
@@ -238,130 +291,179 @@ export function Header() {
               <p className="text-blue-100 text-sm bengali-text">বাংলা ইবুক স্টোর</p>
             </div>
 
-            {/* Tab Switch */}
-            <div className="flex border-b">
-              <button
-                onClick={() => { setAuthMode('login'); setAuthError('') }}
-                className={`flex-1 py-3 text-sm font-medium bengali-text transition-colors ${authMode === 'login' ? 'text-[#1877F2] border-b-2 border-[#1877F2]' : 'text-gray-500 hover:text-gray-700'}`}>
-                লগইন
-              </button>
-              <button
-                onClick={() => { setAuthMode('signup'); setAuthError('') }}
-                className={`flex-1 py-3 text-sm font-medium bengali-text transition-colors ${authMode === 'signup' ? 'text-[#1877F2] border-b-2 border-[#1877F2]' : 'text-gray-500 hover:text-gray-700'}`}>
-                নতুন অ্যাকাউন্ট
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              {authError && (
-                <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm bengali-text">
-                  ❌ {authError}
+            {/* OTP Mode */}
+            {authMode === 'otp' ? (
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <KeyRound className="w-8 h-8 text-[#1877F2]" />
+                  </div>
+                  <h3 className="font-bold text-lg bengali-text">OTP যাচাই করুন</h3>
+                  <p className="text-gray-500 text-sm mt-1 bengali-text">
+                    <span className="font-medium text-gray-700">{pendingSignup?.email}</span> এ একটি OTP পাঠানো হয়েছে
+                  </p>
                 </div>
-              )}
 
-              {authMode === 'login' ? (
-                <form onSubmit={handleEmailLogin} className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-1 bengali-text">ইমেইল</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                        placeholder="আপনার ইমেইল"
-                        className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        required />
-                    </div>
+                {authError && (
+                  <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm bengali-text mb-4">
+                    ❌ {authError}
                   </div>
+                )}
+
+                <form onSubmit={handleVerifyOtp} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-1 bengali-text">পাসওয়ার্ড</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
-                        placeholder="আপনার পাসওয়ার্ড"
-                        className="w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        required />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
+                    <label className="block text-sm font-medium mb-2 bengali-text text-center">৬ সংখ্যার OTP কোড</label>
+                    <input
+                      type="text"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      placeholder="000000"
+                      maxLength={6}
+                      className="w-full text-center text-3xl font-bold tracking-widest border-2 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-[#1877F2]"
+                      required
+                    />
                   </div>
-                  <button type="submit" disabled={authLoading}
+                  <button type="submit" disabled={authLoading || otp.length !== 6}
                     className="w-full bg-[#1877F2] hover:bg-blue-700 text-white py-3 rounded-lg font-medium disabled:opacity-50 bengali-text">
-                    {authLoading ? 'লগইন হচ্ছে...' : 'লগইন করুন'}
+                    {authLoading ? 'যাচাই হচ্ছে...' : 'যাচাই করুন ও অ্যাকাউন্ট খুলুন'}
                   </button>
                 </form>
-              ) : (
-                <form onSubmit={handleSignup} className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-1 bengali-text">আপনার নাম</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type="text" value={name} onChange={e => setName(e.target.value)}
-                        placeholder="আপনার পুরো নাম"
-                        className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 bengali-text"
-                        required />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1 bengali-text">ইমেইল</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)}
-                        placeholder="আপনার ইমেইল"
-                        className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        required />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1 bengali-text">পাসওয়ার্ড</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
-                        placeholder="কমপক্ষে ৬ অক্ষর"
-                        className="w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        required />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1 bengali-text">পাসওয়ার্ড নিশ্চিত করুন</label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
-                        placeholder="পাসওয়ার্ড আবার লিখুন"
-                        className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
-                        required />
-                    </div>
-                  </div>
-                  <button type="submit" disabled={authLoading}
-                    className="w-full bg-[#1877F2] hover:bg-blue-700 text-white py-3 rounded-lg font-medium disabled:opacity-50 bengali-text">
-                    {authLoading ? 'তৈরি হচ্ছে...' : 'অ্যাকাউন্ট তৈরি করুন'}
-                  </button>
-                </form>
-              )}
 
-              {/* Divider */}
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-px bg-gray-200" />
-                <span className="text-sm text-gray-400 bengali-text">অথবা</span>
-                <div className="flex-1 h-px bg-gray-200" />
+                <div className="mt-4 text-center space-y-2">
+                  <button onClick={resendOtp} disabled={authLoading}
+                    className="text-sm text-[#1877F2] hover:underline bengali-text disabled:opacity-50">
+                    OTP পাননি? আবার পাঠান
+                  </button>
+                  <br />
+                  <button onClick={() => { setAuthMode('signup'); setAuthError(''); setOtp('') }}
+                    className="text-sm text-gray-500 hover:underline bengali-text">
+                    ← পিছনে যান
+                  </button>
+                </div>
               </div>
+            ) : (
+              <>
+                <div className="flex border-b">
+                  <button onClick={() => { setAuthMode('login'); setAuthError('') }}
+                    className={`flex-1 py-3 text-sm font-medium bengali-text transition-colors ${authMode === 'login' ? 'text-[#1877F2] border-b-2 border-[#1877F2]' : 'text-gray-500 hover:text-gray-700'}`}>
+                    লগইন
+                  </button>
+                  <button onClick={() => { setAuthMode('signup'); setAuthError('') }}
+                    className={`flex-1 py-3 text-sm font-medium bengali-text transition-colors ${authMode === 'signup' ? 'text-[#1877F2] border-b-2 border-[#1877F2]' : 'text-gray-500 hover:text-gray-700'}`}>
+                    নতুন অ্যাকাউন্ট
+                  </button>
+                </div>
 
-              {/* Google Login */}
-              <button onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 hover:border-gray-300 py-3 rounded-lg font-medium transition-colors">
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
-                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
-                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-                </svg>
-                <span className="bengali-text">Google দিয়ে লগইন করুন</span>
-              </button>
-            </div>
+                <div className="p-6 space-y-4">
+                  {authError && (
+                    <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm bengali-text">
+                      ❌ {authError}
+                    </div>
+                  )}
+
+                  {authMode === 'login' ? (
+                    <form onSubmit={handleEmailLogin} className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1 bengali-text">ইমেইল</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                            placeholder="আপনার ইমেইল"
+                            className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                            required />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 bengali-text">পাসওয়ার্ড</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                            placeholder="আপনার পাসওয়ার্ড"
+                            className="w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                            required />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <button type="submit" disabled={authLoading}
+                        className="w-full bg-[#1877F2] hover:bg-blue-700 text-white py-3 rounded-lg font-medium disabled:opacity-50 bengali-text">
+                        {authLoading ? 'লগইন হচ্ছে...' : 'লগইন করুন'}
+                      </button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleSignupRequest} className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1 bengali-text">আপনার নাম</label>
+                        <div className="relative">
+                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input type="text" value={name} onChange={e => setName(e.target.value)}
+                            placeholder="আপনার পুরো নাম"
+                            className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 bengali-text"
+                            required />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 bengali-text">ইমেইল</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                            placeholder="আপনার ইমেইল"
+                            className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                            required />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 bengali-text">পাসওয়ার্ড</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input type={showPassword ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+                            placeholder="কমপক্ষে ৬ অক্ষর"
+                            className="w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                            required />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1 bengali-text">পাসওয়ার্ড নিশ্চিত করুন</label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <input type={showPassword ? 'text' : 'password'} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)}
+                            placeholder="পাসওয়ার্ড আবার লিখুন"
+                            className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                            required />
+                        </div>
+                      </div>
+                      <button type="submit" disabled={authLoading}
+                        className="w-full bg-[#1877F2] hover:bg-blue-700 text-white py-3 rounded-lg font-medium disabled:opacity-50 bengali-text">
+                        {authLoading ? 'OTP পাঠানো হচ্ছে...' : 'OTP পাঠান'}
+                      </button>
+                    </form>
+                  )}
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex-1 h-px bg-gray-200" />
+                    <span className="text-sm text-gray-400 bengali-text">অথবা</span>
+                    <div className="flex-1 h-px bg-gray-200" />
+                  </div>
+
+                  <button onClick={handleGoogleLogin}
+                    className="w-full flex items-center justify-center gap-3 border-2 border-gray-200 hover:border-gray-300 py-3 rounded-lg font-medium transition-colors">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24">
+                      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/>
+                      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                      <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <span className="bengali-text">Google দিয়ে লগইন করুন</span>
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
