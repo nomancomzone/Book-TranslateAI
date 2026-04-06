@@ -165,7 +165,7 @@ export function Header() {
       const res = await fetch('/api/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail, newPassword, otp: 'verified' }),
+        body: JSON.stringify({ email: resetEmail, newPassword }),
       })
       const data = await res.json()
       if (res.ok && data.success) {

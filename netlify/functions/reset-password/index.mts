@@ -1,31 +1,11 @@
 import type { Context } from '@netlify/functions';
-import { getStore } from '@netlify/blobs';
 
 export default async (req: Request, context: Context) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405 });
 
-  const { email, newPassword, otp } = await req.json();
-  if (!email || !newPassword || !otp) return new Response('Missing fields', { status: 400 });
+  const { email, newPassword } = await req.json();
+  if (!email || !newPassword) return new Response('Missing fields', { status: 400 });
 
-  // OTP verify করো
-  const otpStore = getStore('otps');
-  let stored: any = null;
-  try {
-    stored = await otpStore.get(`reset_${email}`, { type: 'json' });
-  } catch {
-    return Response.json({ success: false, message: 'OTP পাওয়া যায়নি' }, { status: 400 });
-  }
-
-  if (!stored) return Response.json({ success: false, message: 'OTP পাওয়া যায়নি বা মেয়াদ শেষ' }, { status: 400 });
-  if (Date.now() > stored.expiresAt) {
-    await otpStore.delete(`reset_${email}`);
-    return Response.json({ success: false, message: 'OTP এর মেয়াদ শেষ হয়ে গেছে' }, { status: 400 });
-  }
-  if (stored.otp !== otp.toString()) {
-    return Response.json({ success: false, message: 'ভুল OTP' }, { status: 400 });
-  }
-
-  // OTP সঠিক — Netlify Identity তে password update করো
   const siteId = Netlify.env.get('SITE_ID') || '';
   const adminToken = Netlify.env.get('NETLIFY_ACCESS_TOKEN') || '';
 
@@ -39,10 +19,14 @@ export default async (req: Request, context: Context) => {
     { headers: { 'Authorization': `Bearer ${adminToken}` } }
   );
 
-  if (!searchRes.ok) return Response.json({ success: false, message: 'User খুঁজে পাওয়া যায়নি' }, { status: 400 });
+  if (!searchRes.ok) {
+    return Response.json({ success: false, message: 'User খুঁজে পাওয়া যায়নি' }, { status: 400 });
+  }
 
   const data = await searchRes.json();
-  if (!data?.users?.length) return Response.json({ success: false, message: 'এই email দিয়ে কোনো account নেই' }, { status: 400 });
+  if (!data?.users?.length) {
+    return Response.json({ success: false, message: 'এই email দিয়ে কোনো account নেই' }, { status: 400 });
+  }
 
   const userId = data.users[0].id;
 
@@ -59,10 +43,9 @@ export default async (req: Request, context: Context) => {
     }
   );
 
-  if (!updateRes.ok) return Response.json({ success: false, message: 'Password update করতে সমস্যা হয়েছে' }, { status: 500 });
-
-  // OTP delete করো
-  await otpStore.delete(`reset_${email}`);
+  if (!updateRes.ok) {
+    return Response.json({ success: false, message: 'Password update করতে সমস্যা হয়েছে' }, { status: 500 });
+  }
 
   return Response.json({ success: true, message: 'পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!' });
 };
