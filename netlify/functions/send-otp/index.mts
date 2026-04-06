@@ -12,7 +12,7 @@ export default async (req: Request, context: Context) => {
 
   // Signup হলে existing user check করো
   if (type !== 'reset') {
-    const siteId = Netlify.env.get('SITE_ID') || '';
+    const siteId = Netlify.env.get('NETLIFY_SITE_ID') || '';
     const adminToken = Netlify.env.get('NETLIFY_ACCESS_TOKEN') || '';
     if (siteId && adminToken) {
       try {

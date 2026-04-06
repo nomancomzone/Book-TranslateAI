@@ -6,7 +6,7 @@ export default async (req: Request, context: Context) => {
   const { email, newPassword } = await req.json();
   if (!email || !newPassword) return new Response('Missing fields', { status: 400 });
 
-  const siteId = Netlify.env.get('SITE_ID') || '';
+  const siteId = Netlify.env.get('NETLIFY_SITE_ID') || '';
   const adminToken = Netlify.env.get('NETLIFY_ACCESS_TOKEN') || '';
 
   if (!siteId || !adminToken) {
