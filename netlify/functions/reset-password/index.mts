@@ -8,9 +8,8 @@ export default async (req: Request, context: Context) => {
 
   // GoTrue admin API — JWT_SECRET automatically available
   const jwtSecret = Netlify.env.get('JWT_SECRET') || '';
-
   if (!jwtSecret) {
-    return Response.json({ success: false, message: 'JWT secret not found' }, { status: 500 });
+    return Response.json({ success: false, message: 'Server configuration error' }, { status: 500 });
   }
 
   // সব user list করো
