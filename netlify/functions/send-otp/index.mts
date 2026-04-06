@@ -26,7 +26,7 @@ export default async (req: Request, context: Context) => {
       'Authorization': `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      from: 'TranslatedBook <onboarding@resend.dev>',
+      from: 'TranslatedBook <noreply@translatedbook.com>',
       to: email,
       subject: 'TranslatedBook - আপনার OTP কোড',
       html: `
