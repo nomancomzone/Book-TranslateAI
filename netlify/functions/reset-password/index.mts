@@ -13,10 +13,15 @@ export default async (req: Request, context: Context) => {
     return Response.json({ success: false, message: 'Server configuration error' }, { status: 500 });
   }
 
-  // সব user list করো তারপর filter করো
+  // GoTrue API use করো
   const searchRes = await fetch(
-    `https://api.netlify.com/api/v1/sites/${siteId}/identity/users`,
-    { headers: { 'Authorization': `Bearer ${adminToken}` } }
+    `https://translatedbook.com/.netlify/identity/admin/users`,
+    {
+      headers: {
+        'Authorization': `Bearer ${adminToken}`,
+        'Content-Type': 'application/json',
+      }
+    }
   );
 
   if (!searchRes.ok) {
@@ -26,21 +31,19 @@ export default async (req: Request, context: Context) => {
 
   const data = await searchRes.json();
   const users = data?.users || [];
-  
-  // Email দিয়ে filter করো
+
   const foundUser = users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
-  
+
   if (!foundUser) {
-    return Response.json({ 
-      success: false, 
-      message: `এই email দিয়ে কোনো account নেই (${users.length} users found)` 
+    return Response.json({
+      success: false,
+      message: `এই email দিয়ে কোনো account নেই`
     }, { status: 400 });
   }
 
-  const userId = foundUser.id;
-
+  // Password update করো
   const updateRes = await fetch(
-    `https://api.netlify.com/api/v1/sites/${siteId}/identity/users/${userId}`,
+    `https://translatedbook.com/.netlify/identity/admin/users/${foundUser.id}`,
     {
       method: 'PUT',
       headers: {
