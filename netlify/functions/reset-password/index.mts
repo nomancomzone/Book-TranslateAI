@@ -6,19 +6,19 @@ export default async (req: Request, context: Context) => {
   const { email, newPassword } = await req.json();
   if (!email || !newPassword) return new Response('Missing fields', { status: 400 });
 
-  const siteId = Netlify.env.get('NETLIFY_SITE_ID') || '';
-  const adminToken = Netlify.env.get('NETLIFY_ACCESS_TOKEN') || '';
+  // GoTrue admin API — JWT_SECRET automatically available
+  const jwtSecret = Netlify.env.get('JWT_SECRET') || '';
 
-  if (!siteId || !adminToken) {
-    return Response.json({ success: false, message: 'Server configuration error' }, { status: 500 });
+  if (!jwtSecret) {
+    return Response.json({ success: false, message: 'JWT secret not found' }, { status: 500 });
   }
 
-  // GoTrue API use করো
+  // সব user list করো
   const searchRes = await fetch(
     `https://translatedbook.com/.netlify/identity/admin/users`,
     {
       headers: {
-        'Authorization': `Bearer ${adminToken}`,
+        'Authorization': `Bearer ${jwtSecret}`,
         'Content-Type': 'application/json',
       }
     }
@@ -35,10 +35,7 @@ export default async (req: Request, context: Context) => {
   const foundUser = users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
 
   if (!foundUser) {
-    return Response.json({
-      success: false,
-      message: `এই email দিয়ে কোনো account নেই`
-    }, { status: 400 });
+    return Response.json({ success: false, message: 'এই email দিয়ে কোনো account নেই' }, { status: 400 });
   }
 
   // Password update করো
@@ -47,7 +44,7 @@ export default async (req: Request, context: Context) => {
     {
       method: 'PUT',
       headers: {
-        'Authorization': `Bearer ${adminToken}`,
+        'Authorization': `Bearer ${jwtSecret}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ password: newPassword }),
