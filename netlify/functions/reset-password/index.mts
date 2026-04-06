@@ -13,7 +13,6 @@ export default async (req: Request, context: Context) => {
     return Response.json({ success: false, message: 'Server configuration error' }, { status: 500 });
   }
 
-  // User খুঁজো
   const searchRes = await fetch(
     `https://api.netlify.com/api/v1/sites/${siteId}/identity/users?q=${encodeURIComponent(email)}`,
     { headers: { 'Authorization': `Bearer ${adminToken}` } }
@@ -30,7 +29,6 @@ export default async (req: Request, context: Context) => {
 
   const userId = data.users[0].id;
 
-  // Password update করো
   const updateRes = await fetch(
     `https://api.netlify.com/api/v1/sites/${siteId}/identity/users/${userId}`,
     {
