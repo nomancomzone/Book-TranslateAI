@@ -1,18 +1,25 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
-import { BookOpen, ShoppingBag, Heart, Clock, LogOut, User, CreditCard } from 'lucide-react'
+import { BookOpen, ShoppingBag, Heart, Clock, LogOut, User, CreditCard, Lock, Eye, EyeOff } from 'lucide-react'
 
 export const Route = createFileRoute('/account')({
   component: AccountPage,
 })
 
 function AccountPage() {
-  const { user, isAuthenticated, loginWithGoogle, logout } = useAuth()
+  const { user, isAuthenticated, loginWithGoogle, logout, changePassword } = useAuth()
   const [userData, setUserData] = useState<any>(null)
-  const [orders, setOrders] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+
+  // Password change states
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState('')
+  const [passwordSuccess, setPasswordSuccess] = useState('')
 
   useEffect(() => {
     if (!isAuthenticated) { setLoading(false); return }
@@ -21,6 +28,29 @@ function AccountPage() {
       setLoading(false)
     }).catch(() => setLoading(false))
   }, [isAuthenticated])
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setPasswordError('')
+    setPasswordSuccess('')
+    if (newPassword.length < 6) { setPasswordError('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!'); return }
+    if (newPassword !== confirmNewPassword) { setPasswordError('পাসওয়ার্ড মিলছে না!'); return }
+    setPasswordLoading(true)
+    try {
+      const success = await changePassword(newPassword)
+      if (success) {
+        setPasswordSuccess('✅ পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!')
+        setNewPassword('')
+        setConfirmNewPassword('')
+      } else {
+        setPasswordError('পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে।')
+      }
+    } catch {
+      setPasswordError('সমস্যা হয়েছে। আবার চেষ্টা করুন।')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
 
   if (!isAuthenticated) {
     return (
@@ -38,6 +68,7 @@ function AccountPage() {
     { id: 'overview', label: 'ওভারভিউ', icon: User },
     { id: 'orders', label: 'অর্ডার', icon: ShoppingBag },
     { id: 'history', label: 'পড়ার ইতিহাস', icon: Clock },
+    { id: 'password', label: 'পাসওয়ার্ড', icon: Lock },
   ]
 
   return (
@@ -129,7 +160,7 @@ function AccountPage() {
             </div>
             <div className="flex justify-between py-2">
               <span className="text-gray-500 bengali-text">লগইন পদ্ধতি</span>
-              <span className="font-medium">Google</span>
+              <span className="font-medium">Email / Google</span>
             </div>
           </div>
         </div>
@@ -175,6 +206,53 @@ function AccountPage() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'password' && (
+        <div className="bg-white rounded-xl border p-6">
+          <h3 className="font-bold mb-2 bengali-text">পাসওয়ার্ড পরিবর্তন করুন</h3>
+          <p className="text-gray-500 text-sm mb-6 bengali-text">পাসওয়ার্ড ভুলে গেলে বা নতুন পাসওয়ার্ড দিতে চাইলে এখানে দিন</p>
+          {passwordError && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm bengali-text mb-4">❌ {passwordError}</div>}
+          {passwordSuccess && <div className="bg-green-50 text-green-600 px-4 py-3 rounded-lg text-sm bengali-text mb-4">{passwordSuccess}</div>}
+          <form onSubmit={handleChangePassword} className="space-y-4 max-w-sm">
+            <div>
+              <label className="block text-sm font-medium mb-1 bengali-text">নতুন পাসওয়ার্ড</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="কমপক্ষে ৬ অক্ষর"
+                  className="w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  required
+                />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 bengali-text">পাসওয়ার্ড নিশ্চিত করুন</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={confirmNewPassword}
+                  onChange={e => setConfirmNewPassword(e.target.value)}
+                  placeholder="পাসওয়ার্ড আবার লিখুন"
+                  className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
+                  required
+                />
+              </div>
+            </div>
+            <button type="submit" disabled={passwordLoading}
+              className="w-full bg-[#1877F2] hover:bg-blue-700 text-white py-3 rounded-lg font-medium disabled:opacity-50 bengali-text">
+              {passwordLoading ? 'পরিবর্তন হচ্ছে...' : 'পাসওয়ার্ড পরিবর্তন করুন'}
+            </button>
+          </form>
         </div>
       )}
     </div>

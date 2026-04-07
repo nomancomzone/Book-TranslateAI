@@ -15,6 +15,7 @@ interface AuthContextType {
   loginWithFacebook: () => void;
   loginWithEmail: (email: string, password: string) => Promise<boolean>;
   signupWithEmail: (name: string, email: string, password: string) => Promise<boolean>;
+  changePassword: (newPassword: string) => Promise<boolean>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -26,6 +27,7 @@ const AuthContext = createContext<AuthContextType>({
   loginWithFacebook: () => {},
   loginWithEmail: async () => false,
   signupWithEmail: async () => false,
+  changePassword: async () => false,
   logout: async () => {},
   isAuthenticated: false,
 });
@@ -142,6 +144,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const changePassword = useCallback(async (newPassword: string): Promise<boolean> => {
+    try {
+      const { updateUser } = await import('@netlify/identity');
+      await updateUser({ password: newPassword });
+      return true;
+    } catch (e) {
+      console.error('Change password error:', e);
+      return false;
+    }
+  }, []);
+
   const handleLogout = useCallback(async () => {
     try {
       const { logout } = await import('@netlify/identity');
@@ -159,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       loginWithFacebook,
       loginWithEmail,
       signupWithEmail,
+      changePassword,
       logout: handleLogout,
       isAuthenticated: !!user
     }}>
