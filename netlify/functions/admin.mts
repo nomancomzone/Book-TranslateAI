@@ -188,6 +188,32 @@ export default async (req: Request, context: Context) => {
     return Response.json(reviews);
   }
 
+  if (action === 'delete-user') {
+    const { userId } = await req.json();
+    const siteId = Netlify.env.get('NETLIFY_SITE_ID');
+    const token = Netlify.env.get('NETLIFY_ACCESS_TOKEN');
+
+    const res = await fetch(
+      `https://api.netlify.com/api/v1/sites/${siteId}/identity/users/${userId}`,
+      {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (!res.ok) {
+      const err = await res.text();
+      console.error('Delete user error:', err);
+      return Response.json({ success: false, message: 'মুছতে সমস্যা হয়েছে' }, { status: 500 });
+    }
+
+    // Netlify Blobs থেকেও user data মুছো
+    const userStore = getStore('users');
+    await userStore.delete(userId);
+
+    return Response.json({ success: true });
+  }
+
   if (action === 'list-orders') {
     const orderStore = getStore('orders');
     const { blobs } = await orderStore.list();

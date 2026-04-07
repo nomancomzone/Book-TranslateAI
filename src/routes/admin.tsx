@@ -119,6 +119,17 @@ function AdminPage() {
     setBooks(books.filter(b => b.id !== bookId))
   }
 
+  const deleteUser = async (userId: string, userEmail: string) => {
+    if (!confirm(`"${userEmail}" ব্যবহারকারীকে মুছে ফেলতে চান?`)) return
+    const res = await fetch(`/api/admin?action=delete-user`, { method: 'POST', headers: { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) })
+    if (res.ok) {
+      setUsers(users.filter((u: any) => u.id !== userId))
+      alert('✅ ব্যবহারকারী মুছে ফেলা হয়েছে!')
+    } else {
+      alert('❌ মুছতে সমস্যা হয়েছে!')
+    }
+  }
+
   const togglePublish = async (book: any) => {
     await fetch(`/api/admin?action=update-book`, { method: 'POST', headers: { 'x-admin-password': adminPassword, 'Content-Type': 'application/json' }, body: JSON.stringify({ ...book, published: !book.published }) })
     setBooks(await fetchData('list-books'))
@@ -513,7 +524,7 @@ function AdminPage() {
                   <h2 className="text-xl font-bold mb-6 bengali-text">👥 ব্যবহারকারী তালিকা</h2>
                   <div className="bg-white rounded-xl border overflow-hidden">
                     <table className="w-full text-sm">
-                      <thead className="bg-gray-50 border-b"><tr><th className="px-4 py-3 text-left bengali-text">নাম</th><th className="px-4 py-3 text-left bengali-text">ইমেইল</th><th className="px-4 py-3 text-left bengali-text">কেনা বই</th><th className="px-4 py-3 text-left bengali-text">যোগদান</th></tr></thead>
+                      <thead className="bg-gray-50 border-b"><tr><th className="px-4 py-3 text-left bengali-text">নাম</th><th className="px-4 py-3 text-left bengali-text">ইমেইল</th><th className="px-4 py-3 text-left bengali-text">কেনা বই</th><th className="px-4 py-3 text-left bengali-text">যোগদান</th><th className="px-4 py-3 text-left bengali-text">অ্যাকশন</th></tr></thead>
                       <tbody className="divide-y">
                         {users.map((u: any) => (
                           <tr key={u.id} className="hover:bg-gray-50">
@@ -521,6 +532,9 @@ function AdminPage() {
                             <td className="px-4 py-3 text-gray-500">{u.email}</td>
                             <td className="px-4 py-3">{u.purchasedBooks?.length || 0} টি</td>
                             <td className="px-4 py-3 text-gray-500">{u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '-'}</td>
+                            <td className="px-4 py-3">
+                              <button onClick={() => deleteUser(u.id, u.email)} className="p-1.5 hover:bg-red-50 rounded text-red-500"><Trash2 className="w-4 h-4" /></button>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
