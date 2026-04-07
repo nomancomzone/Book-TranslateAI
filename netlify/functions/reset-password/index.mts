@@ -9,25 +9,30 @@ export default async (req: Request, context: Context) => {
   const siteId = process.env.NETLIFY_SITE_ID;
   const token = process.env.NETLIFY_ACCESS_TOKEN;
 
-  // ১. আগে user খুঁজো email দিয়ে
-  const searchRes = await fetch(
-    `https://api.netlify.com/api/v1/sites/${siteId}/identity/users?email=${encodeURIComponent(email)}`,
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
+  let found: any = null;
+  let page = 1;
 
-  if (!searchRes.ok) {
-    return Response.json({ success: false, message: 'ব্যবহারকারী খুঁজে পাওয়া যায়নি' }, { status: 404 });
+  while (!found) {
+    const searchRes = await fetch(
+      `https://api.netlify.com/api/v1/sites/${siteId}/identity/users?per_page=50&page=${page}`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    if (!searchRes.ok) break;
+
+    const data = await searchRes.json();
+    const users = data.users || [];
+
+    found = users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase());
+
+    if (users.length < 50) break;
+    page++;
   }
-
-  const searchData = await searchRes.json();
-  const users = searchData.users || [];
-  const found = users.find((u: any) => u.email === email);
 
   if (!found) {
     return Response.json({ success: false, message: 'এই ইমেইলে কোনো অ্যাকাউন্ট নেই' }, { status: 404 });
   }
 
-  // ২. সেই user-এর password update করো
   const updateRes = await fetch(
     `https://api.netlify.com/api/v1/sites/${siteId}/identity/users/${found.id}`,
     {
@@ -41,6 +46,8 @@ export default async (req: Request, context: Context) => {
   );
 
   if (!updateRes.ok) {
+    const errText = await updateRes.text();
+    console.error('Update error:', errText);
     return Response.json({ success: false, message: 'পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে' }, { status: 500 });
   }
 
