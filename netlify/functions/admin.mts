@@ -190,23 +190,27 @@ export default async (req: Request, context: Context) => {
 
   if (action === 'delete-user') {
     const { userId } = await req.json();
-    const token = Netlify.env.get('NETLIFY_ACCESS_TOKEN');
+    const token = Netlify.env.get('GIT_GATEWAY_TOKEN');
 
     const res = await fetch(
       `https://translatedbook.com/.netlify/identity/admin/users/${userId}`,
       {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
       }
     );
 
-    if (!res.ok) {
-      const err = await res.text();
-      console.error('Delete user error:', err);
+    console.log('Delete status:', res.status);
+    const responseText = await res.text();
+    console.log('Delete response:', responseText);
+
+    if (!res.ok && res.status !== 404) {
       return Response.json({ success: false, message: 'মুছতে সমস্যা হয়েছে' }, { status: 500 });
     }
 
-    // Netlify Blobs থেকেও user data মুছো
     const userStore = getStore('users');
     await userStore.delete(userId);
 
