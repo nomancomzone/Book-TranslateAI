@@ -166,7 +166,7 @@ export function Header() {
               <div className="flex w-full">
                 <input type="text" placeholder="বই বা লেখকের নাম খুঁজুন... / Search books..."
                   value={searchInput} onChange={(e) => setSearchInput(e.target.value)}
-                  className="flex-1 px-4 py-2.5 rounded-l-lg border-0 focus:outline-none text-gray-800" />
+                  className="flex-1 px-4 py-2.5 rounded-l-lg border-0 focus:outline-none text-gray-800 bg-white placeholder-gray-400" />
                 <button type="submit" className="bg-[#FF6B35] hover:bg-orange-600 text-white px-5 py-2.5 rounded-r-lg transition-colors">
                   <Search className="w-5 h-5" />
                 </button>
