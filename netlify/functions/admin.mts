@@ -190,11 +190,10 @@ export default async (req: Request, context: Context) => {
 
   if (action === 'delete-user') {
     const { userId } = await req.json();
-    const siteId = Netlify.env.get('NETLIFY_SITE_ID');
     const token = Netlify.env.get('NETLIFY_ACCESS_TOKEN');
 
     const res = await fetch(
-      `https://api.netlify.com/api/v1/sites/${siteId}/identity/users/${userId}`,
+      `https://translatedbook.com/.netlify/identity/admin/users/${userId}`,
       {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
