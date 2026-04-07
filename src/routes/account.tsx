@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { BookOpen, ShoppingBag, Heart, Clock, LogOut, User, CreditCard, Lock, Eye, EyeOff } from 'lucide-react'
@@ -12,11 +12,12 @@ function AccountPage() {
   const [userData, setUserData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState(() => {
-  const params = new URLSearchParams(window.location.search)
-  return params.get('tab') || 'overview'
-})
+    const params = new URLSearchParams(window.location.search)
+    return params.get('tab') || 'overview'
+  })
+  const isPasswordReset = new URLSearchParams(window.location.search).get('tab') === 'password'
+  const navigate = useNavigate()
 
-  // Password change states
   const [newPassword, setNewPassword] = useState('')
   const [confirmNewPassword, setConfirmNewPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -45,6 +46,12 @@ function AccountPage() {
         setPasswordSuccess('✅ পাসওয়ার্ড সফলভাবে পরিবর্তন হয়েছে!')
         setNewPassword('')
         setConfirmNewPassword('')
+        // Reset mode হলে ৩ সেকেন্ড পর login page এ নিয়ে যাও
+        if (isPasswordReset) {
+          setTimeout(() => {
+            logout().then(() => navigate({ to: '/' }))
+          }, 3000)
+        }
       } else {
         setPasswordError('পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে।')
       }
@@ -73,6 +80,52 @@ function AccountPage() {
     { id: 'history', label: 'পড়ার ইতিহাস', icon: Clock },
     { id: 'password', label: 'পাসওয়ার্ড', icon: Lock },
   ]
+
+  // Password reset mode — শুধু password form দেখাবে
+  if (isPasswordReset) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+        <div className="bg-white rounded-2xl shadow-lg p-8 max-w-sm w-full">
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-3">
+              <Lock className="w-8 h-8 text-green-500" />
+            </div>
+            <h2 className="text-xl font-bold bengali-text">নতুন পাসওয়ার্ড দিন</h2>
+            <p className="text-gray-500 text-sm mt-1 bengali-text">পাসওয়ার্ড দিন এবং নিশ্চিত করুন</p>
+          </div>
+          {passwordError && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm bengali-text mb-4">❌ {passwordError}</div>}
+          {passwordSuccess && <div className="bg-green-50 text-green-600 px-4 py-3 rounded-lg text-sm bengali-text mb-4">{passwordSuccess}<br/><span className="text-xs">৩ সেকেন্ড পর হোমপেজে নিয়ে যাওয়া হবে...</span></div>}
+          <form onSubmit={handleChangePassword} className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1 bengali-text">নতুন পাসওয়ার্ড</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input type={showPassword ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                  placeholder="কমপক্ষে ৬ অক্ষর"
+                  className="w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300" required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1 bengali-text">পাসওয়ার্ড নিশ্চিত করুন</label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input type={showPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)}
+                  placeholder="পাসওয়ার্ড আবার লিখুন"
+                  className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300" required />
+              </div>
+            </div>
+            <button type="submit" disabled={passwordLoading || !!passwordSuccess}
+              className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 bengali-text">
+              {passwordLoading ? 'পরিবর্তন হচ্ছে...' : 'পাসওয়ার্ড পরিবর্তন করুন'}
+            </button>
+          </form>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -133,18 +186,14 @@ function AccountPage() {
       {/* Tabs */}
       <div className="flex gap-2 mb-6 overflow-x-auto">
         {tabs.map(tab => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveTab(tab.id)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${activeTab === tab.id ? 'bg-[#1877F2] text-white' : 'bg-white border hover:bg-gray-50'}`}
-          >
+          <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm whitespace-nowrap transition-colors ${activeTab === tab.id ? 'bg-[#1877F2] text-white' : 'bg-white border hover:bg-gray-50'}`}>
             <tab.icon className="w-4 h-4" />
             <span className="bengali-text">{tab.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Tab Content */}
       {activeTab === 'overview' && (
         <div className="bg-white rounded-xl border p-6">
           <h3 className="font-bold mb-4 bengali-text">অ্যাকাউন্ট তথ্য</h3>
@@ -178,9 +227,7 @@ function AccountPage() {
             <div className="space-y-3">
               {userData.orders.map((orderId: string) => (
                 <div key={orderId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div>
-                    <p className="font-medium text-sm">{orderId}</p>
-                  </div>
+                  <p className="font-medium text-sm">{orderId}</p>
                   <span className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full bengali-text">সম্পন্ন</span>
                 </div>
               ))}
@@ -202,9 +249,7 @@ function AccountPage() {
                     <p className="font-medium text-sm">Book: {bookId}</p>
                     <p className="text-xs text-gray-500">{prog.lastRead ? new Date(prog.lastRead).toLocaleDateString('bn-BD') : ''}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-bold text-[#1877F2]">{prog.progress || 0}%</p>
-                  </div>
+                  <p className="text-sm font-bold text-[#1877F2]">{prog.progress || 0}%</p>
                 </Link>
               ))}
             </div>
@@ -223,16 +268,10 @@ function AccountPage() {
               <label className="block text-sm font-medium mb-1 bengali-text">নতুন পাসওয়ার্ড</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
+                <input type={showPassword ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)}
                   placeholder="কমপক্ষে ৬ অক্ষর"
-                  className="w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  required
-                />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+                  className="w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300" required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
@@ -241,14 +280,9 @@ function AccountPage() {
               <label className="block text-sm font-medium mb-1 bengali-text">পাসওয়ার্ড নিশ্চিত করুন</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={confirmNewPassword}
-                  onChange={e => setConfirmNewPassword(e.target.value)}
+                <input type={showPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)}
                   placeholder="পাসওয়ার্ড আবার লিখুন"
-                  className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
-                  required
-                />
+                  className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300" required />
               </div>
             </div>
             <button type="submit" disabled={passwordLoading}
