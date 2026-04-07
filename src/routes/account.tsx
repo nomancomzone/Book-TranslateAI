@@ -49,8 +49,8 @@ function AccountPage() {
         // Reset mode হলে ৩ সেকেন্ড পর login page এ নিয়ে যাও
         if (isPasswordReset) {
           setTimeout(() => {
-            logout().then(() => navigate({ to: '/' }))
-          }, 3000)
+            navigate({ to: '/' })
+          }, 2000)
         }
       } else {
         setPasswordError('পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে।')
