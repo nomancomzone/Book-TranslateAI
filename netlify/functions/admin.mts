@@ -180,7 +180,7 @@ export default async (req: Request, context: Context) => {
       await reviewStore.setJSON(bookId, filtered);
       return Response.json(filtered);
     }
-    const review = reviews.find((r: any) => r.id === reviewId);
+   const review = reviews.find((r: any) => r.id === reviewId);
     if (review) {
       review.approved = approved;
       await reviewStore.setJSON(bookId, reviews);
@@ -190,30 +190,8 @@ export default async (req: Request, context: Context) => {
 
   if (action === 'delete-user') {
     const { userId } = await req.json();
-    const token = Netlify.env.get('GIT_GATEWAY_TOKEN');
-
-    const res = await fetch(
-      `https://translatedbook.com/.netlify/identity/admin/users/${userId}`,
-      {
-        method: 'DELETE',
-        headers: { 
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-      }
-    );
-
-    console.log('Delete status:', res.status);
-    const responseText = await res.text();
-    console.log('Delete response:', responseText);
-
-    if (!res.ok && res.status !== 404) {
-      return Response.json({ success: false, message: 'মুছতে সমস্যা হয়েছে' }, { status: 500 });
-    }
-
     const userStore = getStore('users');
     await userStore.delete(userId);
-
     return Response.json({ success: true });
   }
 
