@@ -11,19 +11,16 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchInput, setSearchInput] = useState('')
   const [showAuthModal, setShowAuthModal] = useState(false)
-  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'otp' | 'forgot' | 'reset-otp' | 'new-password'>('login')
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'otp' | 'forgot'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmNewPassword, setConfirmNewPassword] = useState('')
   const [name, setName] = useState('')
   const [otp, setOtp] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [authLoading, setAuthLoading] = useState(false)
   const [authError, setAuthError] = useState('')
   const [pendingSignup, setPendingSignup] = useState<{name: string, email: string, password: string} | null>(null)
-  const [resetEmail, setResetEmail] = useState('')
   const cart = useStore(appStore, (s) => s.cart)
   const navigate = useNavigate()
 
@@ -38,14 +35,11 @@ export function Header() {
     setEmail('')
     setPassword('')
     setConfirmPassword('')
-    setNewPassword('')
-    setConfirmNewPassword('')
     setName('')
     setOtp('')
     setAuthError('')
     setShowPassword(false)
     setPendingSignup(null)
-    setResetEmail('')
     setAuthMode('login')
   }
 
@@ -115,73 +109,26 @@ export function Header() {
     setAuthError('')
     setAuthLoading(true)
     try {
-      const res = await fetch('/api/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, type: 'reset' }),
-      })
-      const data = await res.json()
-      if (res.ok) {
-        setResetEmail(email)
-        setOtp('')
-        setAuthMode('reset-otp')
-        setAuthError('')
-      } else {
-        setAuthError(data.message || 'OTP পাঠাতে সমস্যা হয়েছে।')
-      }
-    } catch {
-      setAuthError('নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।')
-    } finally { setAuthLoading(false) }
-  }
-
-  const handleVerifyResetOtp = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setAuthError('')
-    if (!otp.trim() || otp.length !== 6) { setAuthError('৬ সংখ্যার OTP দিন!'); return }
-    setAuthLoading(true)
-    try {
-      const verifyRes = await fetch('/api/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail, otp, type: 'reset' }),
-      })
-      const verifyData = await verifyRes.json()
-      if (!verifyRes.ok || !verifyData.success) { setAuthError(verifyData.message || 'ভুল OTP!'); setAuthLoading(false); return }
-      setAuthMode('new-password')
-      setOtp('')
-      setAuthError('')
-    } catch {
-      setAuthError('সমস্যা হয়েছে। আবার চেষ্টা করুন।')
-    } finally { setAuthLoading(false) }
-  }
-
-  const handleResetPassword = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setAuthError('')
-    if (newPassword.length < 6) { setAuthError('পাসওয়ার্ড কমপক্ষে ৬ অক্ষরের হতে হবে!'); return }
-    if (newPassword !== confirmNewPassword) { setAuthError('পাসওয়ার্ড মিলছে না!'); return }
-    setAuthLoading(true)
-    try {
       const res = await fetch('/api/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmail, newPassword }),
+        body: JSON.stringify({ email }),
       })
       const data = await res.json()
       if (res.ok && data.success) {
-        alert('✅ পাসওয়ার্ড পরিবর্তন হয়েছে! এখন লগইন করুন।')
-        resetAuth()
+        alert('✅ পাসওয়ার্ড রিসেট লিংক আপনার ইমেইলে পাঠানো হয়েছে! ইমেইল চেক করুন।')
         setAuthMode('login')
+        resetAuth()
       } else {
-        setAuthError(data.message || 'পাসওয়ার্ড পরিবর্তন করতে সমস্যা হয়েছে।')
+        setAuthError(data.message || 'সমস্যা হয়েছে। আবার চেষ্টা করুন।')
       }
     } catch {
       setAuthError('নেটওয়ার্ক সমস্যা। আবার চেষ্টা করুন।')
     } finally { setAuthLoading(false) }
   }
 
-  const resendOtp = async (type: 'signup' | 'reset') => {
-    const targetEmail = type === 'reset' ? resetEmail : pendingSignup?.email || ''
+  const resendOtp = async () => {
+    const targetEmail = pendingSignup?.email || ''
     if (!targetEmail) return
     setAuthError('')
     setAuthLoading(true)
@@ -189,7 +136,7 @@ export function Header() {
       const res = await fetch('/api/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: targetEmail, type }),
+        body: JSON.stringify({ email: targetEmail, type: 'signup' }),
       })
       if (res.ok) alert('✅ নতুন OTP পাঠানো হয়েছে!')
       else setAuthError('OTP পাঠাতে সমস্যা হয়েছে।')
@@ -310,7 +257,6 @@ export function Header() {
         )}
       </header>
 
-      {/* Auth Modal */}
       {showAuthModal && (
         <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden max-h-[95vh] overflow-y-auto">
@@ -349,7 +295,7 @@ export function Header() {
                   </button>
                 </form>
                 <div className="mt-4 text-center space-y-2">
-                  <button onClick={() => resendOtp('signup')} disabled={authLoading}
+                  <button onClick={resendOtp} disabled={authLoading}
                     className="text-sm text-[#1877F2] hover:underline bengali-text disabled:opacity-50">
                     OTP পাননি? আবার পাঠান
                   </button>
@@ -368,7 +314,7 @@ export function Header() {
                     <Lock className="w-8 h-8 text-orange-500" />
                   </div>
                   <h3 className="font-bold text-lg bengali-text">পাসওয়ার্ড রিসেট</h3>
-                  <p className="text-gray-500 text-sm mt-1 bengali-text">আপনার email এ OTP পাঠানো হবে</p>
+                  <p className="text-gray-500 text-sm mt-1 bengali-text">আপনার ইমেইলে রিসেট লিংক পাঠানো হবে</p>
                 </div>
                 {authError && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm bengali-text mb-4">❌ {authError}</div>}
                 <form onSubmit={handleForgotPassword} className="space-y-4">
@@ -380,82 +326,13 @@ export function Header() {
                   </div>
                   <button type="submit" disabled={authLoading}
                     className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 bengali-text">
-                    {authLoading ? 'পাঠানো হচ্ছে...' : 'OTP পাঠান'}
+                    {authLoading ? 'পাঠানো হচ্ছে...' : 'রিসেট লিংক পাঠান'}
                   </button>
                 </form>
                 <div className="mt-4 text-center">
                   <button onClick={() => { setAuthMode('login'); setAuthError('') }}
                     className="text-sm text-gray-500 hover:underline bengali-text">← লগইনে ফিরুন</button>
                 </div>
-              </div>
-            )}
-
-            {/* Reset OTP Verify */}
-            {authMode === 'reset-otp' && (
-              <div className="p-6">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <KeyRound className="w-8 h-8 text-orange-500" />
-                  </div>
-                  <h3 className="font-bold text-lg bengali-text">OTP যাচাই করুন</h3>
-                  <p className="text-gray-500 text-sm mt-1 bengali-text">
-                    <span className="font-medium text-gray-700">{resetEmail}</span> এ OTP পাঠানো হয়েছে
-                  </p>
-                </div>
-                {authError && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm bengali-text mb-4">❌ {authError}</div>}
-                <form onSubmit={handleVerifyResetOtp} className="space-y-4">
-                  <input type="text" value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                    placeholder="000000" maxLength={6}
-                    className="w-full text-center text-3xl font-bold tracking-widest border-2 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-orange-300 focus:border-orange-500" required />
-                  <button type="submit" disabled={authLoading || otp.length !== 6}
-                    className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 bengali-text">
-                    {authLoading ? 'যাচাই হচ্ছে...' : 'যাচাই করুন'}
-                  </button>
-                </form>
-                <div className="mt-4 text-center space-y-2">
-                  <button onClick={() => resendOtp('reset')} disabled={authLoading}
-                    className="text-sm text-orange-500 hover:underline bengali-text disabled:opacity-50">
-                    OTP পাননি? আবার পাঠান
-                  </button>
-                  <br />
-                  <button onClick={() => { setAuthMode('forgot'); setAuthError(''); setOtp('') }}
-                    className="text-sm text-gray-500 hover:underline bengali-text">← পিছনে যান</button>
-                </div>
-              </div>
-            )}
-
-            {/* New Password */}
-            {authMode === 'new-password' && (
-              <div className="p-6">
-                <div className="text-center mb-6">
-                  <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Lock className="w-8 h-8 text-green-500" />
-                  </div>
-                  <h3 className="font-bold text-lg bengali-text">নতুন পাসওয়ার্ড দিন</h3>
-                </div>
-                {authError && <div className="bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm bengali-text mb-4">❌ {authError}</div>}
-                <form onSubmit={handleResetPassword} className="space-y-4">
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input type={showPassword ? 'text' : 'password'} value={newPassword} onChange={e => setNewPassword(e.target.value)}
-                      placeholder="নতুন পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)"
-                      className="w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300" required />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input type={showPassword ? 'text' : 'password'} value={confirmNewPassword} onChange={e => setConfirmNewPassword(e.target.value)}
-                      placeholder="পাসওয়ার্ড নিশ্চিত করুন"
-                      className="w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-green-300" required />
-                  </div>
-                  <button type="submit" disabled={authLoading}
-                    className="w-full bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-medium disabled:opacity-50 bengali-text">
-                    {authLoading ? 'পরিবর্তন হচ্ছে...' : 'পাসওয়ার্ড পরিবর্তন করুন'}
-                  </button>
-                </form>
               </div>
             )}
 
@@ -499,7 +376,6 @@ export function Header() {
                           </button>
                         </div>
                       </div>
-                      {/* পাসওয়ার্ড ভুলে গেছেন */}
                       <div className="text-right">
                         <button type="button" onClick={() => { setAuthMode('forgot'); setAuthError(''); setEmail('') }}
                           className="text-sm text-[#1877F2] hover:underline bengali-text">
