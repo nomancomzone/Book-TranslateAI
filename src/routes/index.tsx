@@ -26,9 +26,9 @@ const heroSlides = [
     ctaLink: '/books?sort=new',
   },
   {
-    title: 'পড়ুন যেকোনো ডিভাইসে',
-    subtitle: 'Read on Any Device',
-    desc: 'আপনার পছন্দের বইয়ের বাংলা ভার্শন পেতে উইশলিস্টে বইয়ের ও লেখকের নাম লিখে উইশ করুন — আমরা দ্রুতই নিয়ে আসব!',
+    title: 'আপনা পছন্দের বই পড়ুন বাংলা ভাষায়',
+    subtitle: 'Read your favorite book in Bengali',
+    desc: 'আপনার পছন্দের বইয়ের বাংলা ভার্শন পেতে বই ও লেখকের নাম লিখে উইশ করুন — আমরা দ্রুতই নিয়ে আসব!',
     bg: 'from-[#00C853] to-[#2E7D32]',
     cta: '♡ উইশলিস্টে যান',
     ctaLink: '/wishlist',
