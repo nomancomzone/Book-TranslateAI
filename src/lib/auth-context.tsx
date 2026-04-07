@@ -41,7 +41,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const { getUser, handleAuthCallback, onAuthChange, AUTH_EVENTS } = await import('@netlify/identity');
         const callbackResult = await handleAuthCallback();
-        if (callbackResult && callbackResult.type === 'oauth' && callbackResult.user) {
+
+        if (callbackResult && callbackResult.type === 'recovery' && callbackResult.user) {
+          const u = callbackResult.user;
+          setUser({
+            id: u.id,
+            email: u.email || '',
+            name: (u as any).user_metadata?.full_name || u.email || '',
+            token: (u as any).token?.access_token || '',
+            avatar: (u as any).user_metadata?.avatar_url,
+          });
+          window.history.replaceState({}, '', window.location.pathname);
+          window.location.href = '/account?tab=password';
+          return;
+        } else if (callbackResult && callbackResult.type === 'oauth' && callbackResult.user) {
           const u = callbackResult.user;
           setUser({
             id: u.id,
@@ -63,6 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
           }
         }
+
         onAuthChange((event, u) => {
           if (event === AUTH_EVENTS.LOGIN && u) {
             setUser({

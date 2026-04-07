@@ -11,7 +11,10 @@ function AccountPage() {
   const { user, isAuthenticated, loginWithGoogle, logout, changePassword } = useAuth()
   const [userData, setUserData] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState(() => {
+  const params = new URLSearchParams(window.location.search)
+  return params.get('tab') || 'overview'
+})
 
   // Password change states
   const [newPassword, setNewPassword] = useState('')
