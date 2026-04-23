@@ -27,6 +27,7 @@ function BookDetailPage() {
   const [couponCode, setCouponCode] = useState('')
   const [couponApplied, setCouponApplied] = useState(false)
   const [bookOwned, setBookOwned] = useState(false)
+  const [showDisclaimerModal, setShowDisclaimerModal] = useState(false)
 
   useEffect(() => {
     fetch(`/api/books/detail?id=${bookId}`)
@@ -83,13 +84,18 @@ function BookDetailPage() {
 
   const handleBuyNow = async () => {
     if (!isAuthenticated) { loginWithGoogle(); return }
+    if (bookOwned) { window.location.href = `/read/${bookId}`; return }
     if (couponApplied) {
       await addToLibrary()
       alert('✅ বইটি আপনার লাইব্রেরিতে যোগ হয়েছে!')
       window.location.href = `/read/${bookId}`
       return
     }
-    if (bookOwned) { window.location.href = `/read/${bookId}`; return }
+    setShowDisclaimerModal(true)
+  }
+
+  const handleDisclaimerConfirm = () => {
+    setShowDisclaimerModal(false)
     addToCart(bookId)
     window.location.href = '/checkout'
   }
@@ -479,6 +485,40 @@ function BookDetailPage() {
           </div>
         </div>
       </div>
+
+      {showDisclaimerModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl p-6">
+            <div className="text-center mb-6">
+              <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                <span className="text-3xl">📖</span>
+              </div>
+              <h3 className="text-xl font-bold bengali-text mb-3">ক্রয় করার আগে পড়ুন</h3>
+              <p className="text-gray-600 bengali-text leading-relaxed">
+                কোন ই-বুক ক্রয় করার পূর্বে{' '}
+                <button
+                  onClick={() => setPreviewOpen(true)}
+                  className="text-[#1877F2] font-medium hover:underline bengali-text">
+                  একটু পড়ে দেখুন
+                </button>
+                {' '}এ ক্লিক করে বই সম্পর্কিত ডিসক্লেইমার পড়ে তারপরে ক্রয় করার জন্য অনুরোধ করা হলো।
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDisclaimerModal(false)}
+                className="flex-1 border-2 border-gray-200 py-3 rounded-xl font-medium bengali-text hover:bg-gray-50">
+                বাতিল
+              </button>
+              <button
+                onClick={handleDisclaimerConfirm}
+                className="flex-1 bg-[#FF6B35] hover:bg-orange-600 text-white py-3 rounded-xl font-medium bengali-text">
+                ঠিক আছে, কিনব
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {previewOpen && previewImages.length > 0 && (
         <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
